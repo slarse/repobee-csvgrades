@@ -50,14 +50,6 @@ def callback(args: argparse.Namespace, api: None) -> None:
 
 
 class CSVGradeCommand(plug.Plugin):
-    CONFIGURABLE_ARGS = [
-        "hook_results_file",
-        "grades_file",
-        "edit_msg_file",
-        "grade_specs",
-        "teachers",
-    ]
-
     def __init__(self):
         self._hook_results_file = None
         self._grades_file = None
@@ -82,7 +74,9 @@ class CSVGradeCommand(plug.Plugin):
     def _parse_teachers(config_parser):
         return [
             name.strip()
-            for name in config_parser.get(PLUGIN_NAME, "teachers", fallback=[]).split(",")
+            for name in config_parser.get(
+                PLUGIN_NAME, "teachers", fallback=[]
+            ).split(",")
         ]
 
     @staticmethod
