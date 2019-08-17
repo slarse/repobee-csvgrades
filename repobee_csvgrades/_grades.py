@@ -51,7 +51,12 @@ class Grades:
 
     @property
     def csv(self):
-        return [self._headers, *self._contents]
+        output_contents = [self._headers, *self._contents]
+        column_widths = largest_cells(output_contents)
+        return [
+            [cell.rjust(column_widths[i]) for i, cell in enumerate(row)]
+            for row in output_contents
+        ]
 
 
 def extract_row_and_col_mappings(
@@ -69,3 +74,10 @@ def extract_row_and_col_mappings(
         row[username_col]: i for i, row in enumerate(grades_file_contents)
     }
     return username_to_row_nr, master_repo_to_col_nr
+
+
+def largest_cells(rows):
+    """Return a list with the widths of the largest cell of each column."""
+    transpose = list(zip(*rows))
+    widths = map(lambda row: map(len, row), transpose)
+    return list(map(max, widths))
