@@ -13,6 +13,7 @@ import argparse
 import csv
 import pathlib
 import itertools
+import collections
 
 from typing import List
 
@@ -27,27 +28,38 @@ def callback(args: argparse.Namespace, api: None) -> None:
     hook_results_mapping = read_results_file(results_file)
     grades_file = pathlib.Path(args.grades_file)
     grades_headers, grades_file_contents = read_grades_file(grades_file)
-    marked_grades = mark_grades(
+    marked_grades, new_grades = mark_grades(
         grades_headers,
         grades_file_contents,
         hook_results_mapping,
         args.students,
         args.master_repo_names,
     )
+    write_edit_msg(new_grades, args.master_repo_names, pathlib.Path(args.edit_msg_file))
     write_grades_file(grades_file, grades_headers, marked_grades)
+
+
+def write_edit_msg(new_grades, master_repo_names, edit_msg_file):
+    sorted_repo_names = ", ".join(sorted(master_repo_names))
+    format_grade = lambda student, mn, grade: "{} {} {}".format(student, mn, grade)
+    teacher_notifications = [
+        "@{}\n{}".format(teacher, "\n".join([format_grade(*tup) for tup in grades]))
+        for teacher, grades in new_grades.items()
+    ]
+    msg = "Report grades for {}\n\n{}".format(
+        sorted_repo_names, "\n\n".join(teacher_notifications)
+    )
+    edit_msg_file.write_text(msg, encoding=sys.getdefaultencoding())
 
 
 def mark_grades(
     grades_headers, grades_file_contents, hook_results_mapping, teams, master_repo_names
 ):
     grades_file_contents = [list(row) for row in grades_file_contents]  # safe copy
-    master_repo_name_to_column_nr = {
-        repo_name: grades_headers.index(repo_name) for repo_name in master_repo_names
-    }
-    username_column = grades_headers.index("username")
-    username_to_row_nr = {
-        row[username_column]: i for i, row in enumerate(grades_file_contents)
-    }
+    username_to_row_nr, master_repo_to_col_nr = extract_row_and_col_mappings(
+        grades_headers, grades_file_contents, master_repo_names
+    )
+    new_grades = collections.defaultdict(list)
 
     for team, master_repo_name in itertools.product(teams, master_repo_names):
         repo_name = generate_repo_name(str(team), master_repo_name)
@@ -60,15 +72,32 @@ def mark_grades(
         )
         pass_issues = [issue for issue in issues if issue.title == "Pass"]
         if pass_issues:
+            pass_issue = pass_issues[0]
             for student in team.members:
-                col = master_repo_name_to_column_nr[master_repo_name]
+                col = master_repo_to_col_nr[master_repo_name]
                 row = username_to_row_nr[student]
                 grade = "P"
                 old = mark(grades_file_contents, row, col, grade)
                 if old != grade:
+                    new_grades[pass_issue.author].append(
+                        (student, master_repo_name, grade)
+                    )
                     print("{} for {} on {}".format(grade, student, master_repo_name))
 
-    return grades_file_contents
+    return grades_file_contents, new_grades
+
+
+def extract_row_and_col_mappings(
+    grades_headers, grades_file_contents, master_repo_names
+):
+    master_repo_to_col_nr = {
+        repo_name: grades_headers.index(repo_name) for repo_name in master_repo_names
+    }
+    username_col = grades_headers.index("username")
+    username_to_row_nr = {
+        row[username_col]: i for i, row in enumerate(grades_file_contents)
+    }
+    return username_to_row_nr, master_repo_to_col_nr
 
 
 def mark(grades_file_contents, row, col, grade) -> str:
@@ -159,6 +188,13 @@ def create_extension_command():
         help="Path to the CSV file with student grades.",
         type=str,
         required=True,
+    )
+    parser.add_argument(
+        "--edit-msg-file",
+        help="Filepath specifying where to put the edit message. "
+        "Defaults to 'edit_msg.txt'",
+        type=str,
+        default="edit_msg.txt",
     )
     return plug.ExtensionCommand(
         parser=parser,
