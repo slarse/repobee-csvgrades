@@ -141,9 +141,18 @@ class CSVGradeCommand(plug.Plugin):
         )
         return plug.ExtensionCommand(
             parser=parser,
-            name="csvgrades",
-            help="Blabla",
-            description="More blaba",
+            name="record-grades",
+            help="Record grades from issues into a CSV file.",
+            description="Record grades from issues into a CSV file. Grade "
+            "specifications on the form <PRIORITY>:<SYMBOL>:<REGEX> "
+            "specify which issues are grading issues (by matching the title "
+            "against the spec regex), and the corresponding symbol is written "
+            "into the grades CSV file. If multiple grading issues are found "
+            "in the same repo, the one with the lowest priority is recorded. "
+            "A grade in the CSV file can only be overwritten by a grade with "
+            "lower priority. Only grading issues opened by teachers "
+            "specified by the ``--teachers`` option are recorded. Read more "
+            "at https://github.com/slarse/repobee-csvgrades",
             callback=callback,
             requires_base_parsers=[
                 plug.BaseParser.REPO_NAMES,
