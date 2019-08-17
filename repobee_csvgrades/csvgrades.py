@@ -8,6 +8,7 @@
 import argparse
 import pathlib
 import daiquiri
+import configparser
 
 import repobee_plug as plug
 
@@ -48,56 +49,110 @@ def callback(args: argparse.Namespace, api: None) -> None:
         LOGGER.warning("No new grades reported")
 
 
-@plug.repobee_hook
-def create_extension_command():
-    parser = plug.ExtensionParser()
-    parser.add_argument(
-        "--hook-results-file",
-        help="Path to an existing hook results file.",
-        type=str,
-        required=True,
-    )
-    parser.add_argument(
-        "--grades-file",
-        help="Path to the CSV file with student grades.",
-        type=str,
-        required=True,
-    )
-    parser.add_argument(
-        "--edit-msg-file",
-        help="Filepath specifying where to put the edit message. "
-        "Defaults to 'edit_msg.txt'",
-        type=str,
-        default="edit_msg.txt",
-    )
-    parser.add_argument(
-        "--gs",
-        "--grade-specs",
-        help="One or more grade specifications on the form <PRIORITY>:<SYMBOL>:<REGEX>",
-        required=True,
-        type=str,
-        nargs="+",
-        dest="grade_specs",
-    )
-    parser.add_argument(
-        "-t",
-        "--teachers",
-        help="One or more space-separated usernames of teachers/TAs that are "
-        "authorized to open grading issues. If a grading issue is found by a "
-        "user not in this list, a warning is issued and the grade is not "
-        "recorded.",
-        required=True,
-        nargs="+",
-        type=str,
-    )
-    return plug.ExtensionCommand(
-        parser=parser,
-        name="csvgrades",
-        help="Blabla",
-        description="More blaba",
-        callback=callback,
-        requires_base_parsers=[
-            plug.BaseParser.REPO_NAMES,
-            plug.BaseParser.STUDENTS,
-        ],
-    )
+class CSVGradeCommand(plug.Plugin):
+    CONFIGURABLE_ARGS = [
+        "hook_results_file",
+        "grades_file",
+        "edit_msg_file",
+        "grade_specs",
+        "teachers",
+    ]
+
+    def __init__(self):
+        self._hook_results_file = None
+        self._grades_file = None
+        self._edit_msg_file = "edit_msg.txt"
+        self._grade_specs = None
+        self._teachers = None
+
+    def config_hook(self, config_parser: configparser.ConfigParser):
+        self._hook_results_file = config_parser.get(
+            PLUGIN_NAME, "hook_results_file", fallback=self._hook_results_file
+        )
+        self._grades_file = config_parser.get(
+            PLUGIN_NAME, "grades_file", fallback=self._grades_file
+        )
+        self._edit_msg_file = config_parser.get(
+            PLUGIN_NAME, "edit_msg_file", fallback=self._edit_msg_file
+        )
+        self._grade_specs = self._parse_grade_specs(config_parser)
+        self._teachers = self._parse_teachers(config_parser)
+
+    @staticmethod
+    def _parse_teachers(config_parser):
+        return [
+            name.strip()
+            for name in config_parser.get(PLUGIN_NAME, "teachers", fallback=[]).split(",")
+        ]
+
+    @staticmethod
+    def _parse_grade_specs(config_parser):
+        if not config_parser.has_section(PLUGIN_NAME):
+            return []
+        sec = config_parser[PLUGIN_NAME]
+        return [
+            value for key, value in sec.items() if key.endswith("gradespec")
+        ]
+
+    def create_extension_command(self):
+        parser = plug.ExtensionParser()
+        parser.add_argument(
+            "--hf",
+            "--hook-results-file",
+            help="Path to an existing hook results file.",
+            type=str,
+            required=not self._hook_results_file,
+            default=self._hook_results_file,
+            dest="hook_results_file",
+        )
+        parser.add_argument(
+            "--gf",
+            "--grades-file",
+            help="Path to the CSV file with student grades.",
+            type=str,
+            required=not self._grades_file,
+            default=self._grades_file,
+            dest="grades_file",
+        )
+        parser.add_argument(
+            "--ef",
+            "--edit-msg-file",
+            help="Filepath specifying where to put the edit message. "
+            "Defaults to 'edit_msg.txt'",
+            type=str,
+            default=self._edit_msg_file,
+            dest="edit_msg_file",
+        )
+        parser.add_argument(
+            "--gs",
+            "--grade-specs",
+            help="One or more grade specifications on the form <PRIORITY>:<SYMBOL>:<REGEX>",
+            type=str,
+            required=not self._grade_specs,
+            default=self._grade_specs,
+            nargs="+",
+            dest="grade_specs",
+        )
+        parser.add_argument(
+            "-t",
+            "--teachers",
+            help="One or more space-separated usernames of teachers/TAs that are "
+            "authorized to open grading issues. If a grading issue is found by a "
+            "user not in this list, a warning is issued and the grade is not "
+            "recorded.",
+            type=str,
+            required=not self._teachers,
+            default=self._teachers,
+            nargs="+",
+        )
+        return plug.ExtensionCommand(
+            parser=parser,
+            name="csvgrades",
+            help="Blabla",
+            description="More blaba",
+            callback=callback,
+            requires_base_parsers=[
+                plug.BaseParser.REPO_NAMES,
+                plug.BaseParser.STUDENTS,
+            ],
+        )
