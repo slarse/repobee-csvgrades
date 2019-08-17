@@ -1,0 +1,17 @@
+Report grades for week-1, week-2, week-4, week-6
+
+@ta_a
+slarse week-1 K
+slarse week-2 K
+slarse week-4 P
+slarse week-6 P
+
+@ta_b
+glassey week-1 P
+glennol week-1 P
+glassey week-2 P
+glennol week-2 P
+glassey week-4 K
+glennol week-4 K
+glassey week-6 K
+glennol week-6 K

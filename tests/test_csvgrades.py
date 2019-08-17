@@ -21,11 +21,17 @@ TEAMS = tuple(
 DIR = pathlib.Path(__file__).parent
 GRADES_FILE = DIR / "grades.csv"
 EXPECTED_GRADES_FILE = DIR / "expected_grades.csv"
+EXPECTED_GRADES_MULTI_SPEC_FILE = DIR / "expected_grades_multi_spec.csv"
 EXPECTED_EDIT_MSG_FILE = DIR / "expected_edit_msg.txt"
+EXPECTED_EDIT_MSG_MULTI_SPEC_FILE = DIR / "expected_edit_msg_multi_spec.txt"
 
 SLARSE_TA = "ta_a"
 GLASSEY_GLENNOL_TA = "ta_b"
 TEACHERS = (SLARSE_TA, GLASSEY_GLENNOL_TA)
+
+PASS_GRADESPEC_FORMAT = "1:P:[Pp]ass"
+FAIL_GRADESPEC_FORMAT = "2:F:[Ff]ail"
+KOMP_GRADESPEC_FORMAT = "3:K:[Kk]omplettering"
 
 
 @pytest.fixture
@@ -49,10 +55,10 @@ def mocked_hook_results(mocker):
             data={pass_issue.number: pass_issue.to_dict()},
         )
 
-    def create_other_hookresult(author):
-        other_issue = plug.Issue(
-            title="Grading criteria",
-            body="This is grading criteria",
+    def create_komp_hookresult(author):
+        komp_issue = plug.Issue(
+            title="Komplettering",
+            body="This is komplettering",
             number=1,
             created_at=datetime(2009, 12, 31),
             author=author,
@@ -61,11 +67,11 @@ def mocked_hook_results(mocker):
             hook="list-issues",
             status=plug.Status.SUCCESS,
             msg=None,
-            data={other_issue.number: other_issue.to_dict()},
+            data={komp_issue.number: komp_issue.to_dict()},
         )
 
-    def create_other_and_pass_hookresult(author):
-        other = create_other_hookresult(author)
+    def create_komp_and_pass_hookresult(author):
+        other = create_komp_hookresult(author)
         pass_ = create_pass_hookresult(author)
         return plug.HookResult(
             hook="list-issues",
@@ -79,10 +85,10 @@ def mocked_hook_results(mocker):
     hook_results = {
         gen_name(str(team), repo_name): [result]
         for team, repo_name, result in [
-            (slarse, "week-1", create_other_hookresult(SLARSE_TA)),
-            (slarse, "week-2", create_other_hookresult(SLARSE_TA)),
+            (slarse, "week-1", create_komp_hookresult(SLARSE_TA)),
+            (slarse, "week-2", create_komp_hookresult(SLARSE_TA)),
             (slarse, "week-4", create_pass_hookresult(SLARSE_TA)),
-            (slarse, "week-6", create_other_and_pass_hookresult(SLARSE_TA)),
+            (slarse, "week-6", create_komp_and_pass_hookresult(SLARSE_TA)),
             (
                 glassey_glennol,
                 "week-1",
@@ -91,17 +97,17 @@ def mocked_hook_results(mocker):
             (
                 glassey_glennol,
                 "week-2",
-                create_other_and_pass_hookresult(GLASSEY_GLENNOL_TA),
+                create_komp_and_pass_hookresult(GLASSEY_GLENNOL_TA),
             ),
             (
                 glassey_glennol,
                 "week-4",
-                create_other_hookresult(GLASSEY_GLENNOL_TA),
+                create_komp_hookresult(GLASSEY_GLENNOL_TA),
             ),
             (
                 glassey_glennol,
                 "week-6",
-                create_other_hookresult(GLASSEY_GLENNOL_TA),
+                create_komp_hookresult(GLASSEY_GLENNOL_TA),
             ),
         ]
     }
@@ -131,6 +137,7 @@ class TestCallback:
             master_repo_names="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
+            grade_specs=[PASS_GRADESPEC_FORMAT],
         )
 
         csvgrades.callback(args=args, api=None)
@@ -150,6 +157,7 @@ class TestCallback:
             master_repo_names="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(edit_msg_file),
             teachers=list(TEACHERS),
+            grade_specs=[PASS_GRADESPEC_FORMAT],
         )
 
         csvgrades.callback(args=args, api=None)
@@ -171,12 +179,39 @@ class TestCallback:
             master_repo_names="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(edit_msg_file),
             teachers=["glassey", "slarse"],  # wrong teachers!
+            grade_specs=[PASS_GRADESPEC_FORMAT],
         )
 
         csvgrades.callback(args=args, api=None)
 
         assert tmp_grades_file.read_text("utf8") == grades_file_contents
         assert not edit_msg_file.exists()
+
+    def test_multiple_specs(self, tmp_grades_file, mocked_hook_results):
+        """Test that multiple specs works correctly, in the sense that they are
+        all registered, but where there are multiple matching issues per repo,
+        the grade spec with the lowest priority wins out.
+        """
+        edit_msg_file = tmp_grades_file.parent / "editmsg.txt"
+        args = argparse.Namespace(
+            students=list(TEAMS),
+            hook_results_file="",  # don't care, read_results_file is mocked
+            grades_file=str(tmp_grades_file),
+            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            edit_msg_file=str(edit_msg_file),
+            teachers=TEACHERS,
+            grade_specs=[PASS_GRADESPEC_FORMAT, KOMP_GRADESPEC_FORMAT],
+        )
+
+        csvgrades.callback(args=args, api=None)
+
+        assert _file.read_grades_file(
+            tmp_grades_file
+        ) == _file.read_grades_file(EXPECTED_GRADES_MULTI_SPEC_FILE)
+        assert (
+            edit_msg_file.read_text("utf8").strip()
+            == EXPECTED_EDIT_MSG_MULTI_SPEC_FILE.read_text("utf8").strip()
+        )
 
 
 def test_register():

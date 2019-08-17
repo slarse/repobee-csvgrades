@@ -14,6 +14,7 @@ import repobee_plug as plug
 from repobee_csvgrades import _file
 from repobee_csvgrades import _grades
 from repobee_csvgrades import _marker
+from repobee_csvgrades import _containers
 
 PLUGIN_NAME = "csvgrades"
 
@@ -25,12 +26,14 @@ def callback(args: argparse.Namespace, api: None) -> None:
     grades_file = pathlib.Path(args.grades_file)
     hook_results_mapping = _file.read_results_file(results_file)
     grades = _grades.Grades(grades_file, args.master_repo_names)
+    grade_specs = list(map(_containers.GradeSpec, args.grade_specs))
     new_grades = _marker.mark_grades(
         grades,
         hook_results_mapping,
         args.students,
         args.master_repo_names,
         args.teachers,
+        grade_specs,
     )
     if new_grades:
         _file.write_edit_msg(
@@ -64,6 +67,15 @@ def create_extension_command():
         "Defaults to 'edit_msg.txt'",
         type=str,
         default="edit_msg.txt",
+    )
+    parser.add_argument(
+        "--gs",
+        "--grade-specs",
+        help="One or more grade specifications on the form <PRIORITY>:<SYMBOL>:<REGEX>",
+        required=True,
+        type=str,
+        nargs="+",
+        dest="grade_specs",
     )
     parser.add_argument(
         "-t",

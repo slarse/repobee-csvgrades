@@ -7,30 +7,29 @@
 """
 import collections
 import itertools
+import re
+import heapq
 from typing import List
 
 import daiquiri
 
 import repobee_plug as plug
 
+from repobee_csvgrades import _containers
+
 LOGGER = daiquiri.getLogger(__file__)
 
 
-def mark_grade(grades, team, master_repo_name, hook_results_mapping, teachers):
-    repo_name = generate_repo_name(str(team), master_repo_name)
-    list_issues_result = extract_list_issues_results(
-        repo_name, hook_results_mapping[repo_name]
-    )
-    issues = (
-        plug.Issue.from_dict(issue_dict)
-        for issue_dict in list_issues_result.data.values()
-    )
-    pass_issues = [issue for issue in issues if issue.title == "Pass"]
-    authorized = [issue for issue in pass_issues if issue.author in teachers]
-    unauthorized = [
-        issue for issue in pass_issues if issue.author not in teachers
+def get_authorized_issues(issues, teachers, grade_spec, repo_name):
+    matched_issues = [
+        issue for issue in issues if re.match(grade_spec.regex, issue.title)
     ]
-
+    authorized = [
+        issue for issue in matched_issues if issue.author in teachers
+    ]
+    unauthorized = [
+        issue for issue in matched_issues if issue.author not in teachers
+    ]
     if unauthorized:
         for issue in unauthorized:
             LOGGER.warning(
@@ -38,32 +37,64 @@ def mark_grade(grades, team, master_repo_name, hook_results_mapping, teachers):
                     repo_name, issue.number, issue.author
                 )
             )
+    return authorized
+
+
+def mark_grade(
+    grades, team, master_repo_name, hook_results_mapping, teachers, grade_specs
+):
+    repo_name = generate_repo_name(str(team), master_repo_name)
+    list_issues_result = extract_list_issues_results(
+        repo_name, hook_results_mapping[repo_name]
+    )
+    issues = [
+        plug.Issue.from_dict(issue_dict)
+        for issue_dict in list_issues_result.data.values()
+    ]
+
+    issue_heap = []
+    for spec in grade_specs:
+        for issue in get_authorized_issues(issues, teachers, spec, repo_name):
+            heapq.heappush(issue_heap, (spec, issue))
 
     graded_students = []
-    grade = "P"
     author = None
-    if authorized:
-        issue = authorized[0]
-        author = issue.author
+    symbol = None
+    if issue_heap:
+        spec, issue = issue_heap[0]
         for student in team.members:
-            old = grades.set(student, master_repo_name, grade)
-            if old != grade:
+            old = grades.set(student, master_repo_name, spec.symbol)
+            if old != spec.symbol:
                 graded_students.append(student)
                 LOGGER.info(
-                    "{} for {} on {}".format(grade, student, master_repo_name)
+                    "{} for {} on {}".format(
+                        spec.symbol, student, master_repo_name
+                    )
                 )
+                author = issue.author
+                symbol = spec.symbol
 
-    return graded_students, grade, author
+    return graded_students, symbol, author
 
 
 def mark_grades(
-    grades, hook_results_mapping, teams, master_repo_names, teachers
+    grades,
+    hook_results_mapping,
+    teams,
+    master_repo_names,
+    teachers,
+    grade_specs,
 ):
     new_grades = collections.defaultdict(list)
 
     for team, master_repo_name in itertools.product(teams, master_repo_names):
         graded_students, grade, author = mark_grade(
-            grades, team, master_repo_name, hook_results_mapping, teachers
+            grades,
+            team,
+            master_repo_name,
+            hook_results_mapping,
+            teachers,
+            grade_specs,
         )
         if graded_students:
             new_grades[author] += [
@@ -80,7 +111,7 @@ def extract_list_issues_results(
     for result in hook_results:
         if result.hook == "list-issues":
             return result
-    raise plug.exception.PlugError(
+    raise plug.PlugError(
         "hook results for {} does not contain 'list-issues' result".format(
             repo_name
         )
