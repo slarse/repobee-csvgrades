@@ -28,11 +28,29 @@ def callback(args: argparse.Namespace, api: None) -> None:
     results_file = pathlib.Path(args.hook_results_file)
     grades_file = pathlib.Path(args.grades_file)
     hook_results_mapping = _file.read_results_file(results_file)
+    if not "list-issues" in hook_results_mapping:
+        raise _exception.FileError(
+            "can't locate list-issues metainfo in hook results"
+        )
+    if (
+        not args.allow_other_states
+        and plug.IssueState(hook_results_mapping["list-issues"][0].data["state"])
+        != plug.IssueState.ALL
+    ):
+        raise _exception.FileError(
+            "repobee list-issues was not run with the --all flag. This may "
+            "cause grading issues to be missed. Re-run list-issues with the "
+            "--all flag, or run this command with --allow-other-states to "
+            "record grades anyway."
+        )
+
     grade_specs = list(
         map(_containers.GradeSpec.from_format, args.grade_specs)
     )
     grades = _grades.Grades(grades_file, args.master_repo_names, grade_specs)
-    grades.check_users(itertools.chain.from_iterable([t.members for t in args.students]))
+    grades.check_users(
+        itertools.chain.from_iterable([t.members for t in args.students])
+    )
     new_grades = _marker.mark_grades(
         grades,
         hook_results_mapping,
@@ -141,6 +159,15 @@ class CSVGradeCommand(plug.Plugin):
             required=not self._teachers,
             default=self._teachers,
             nargs="+",
+        )
+        parser.add_argument(
+            "-a",
+            "--allow-other-states",
+            help="Allow other list-issues states than `all`. If this flag is "
+            "not specified, the `list-issues` command must have been run "
+            "with the `--all` flag.",
+            action="store_true",
+            default=False,
         )
         return plug.ExtensionCommand(
             parser=parser,

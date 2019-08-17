@@ -117,6 +117,14 @@ def mocked_hook_results(mocker):
             ),
         ]
     }
+    hook_results["list-issues"] = [
+        plug.HookResult(
+            hook="list-issues",
+            status=plug.Status.SUCCESS,
+            msg=None,
+            data={"state": plug.IssueState.ALL.value},
+        )
+    ]
     mocker.patch(
         "repobee_csvgrades._file.read_results_file",
         return_value=hook_results,
@@ -144,6 +152,7 @@ class TestCallback:
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
+            allow_other_states=False,
         )
 
         csvgrades.callback(args=args, api=None)
@@ -164,6 +173,7 @@ class TestCallback:
             edit_msg_file=str(edit_msg_file),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
+            allow_other_states=False,
         )
 
         csvgrades.callback(args=args, api=None)
@@ -186,6 +196,7 @@ class TestCallback:
             edit_msg_file=str(edit_msg_file),
             teachers=["glassey", "slarse"],  # wrong teachers!
             grade_specs=[PASS_GRADESPEC_FORMAT],
+            allow_other_states=False,
         )
 
         csvgrades.callback(args=args, api=None)
@@ -207,6 +218,7 @@ class TestCallback:
             edit_msg_file=str(edit_msg_file),
             teachers=TEACHERS,
             grade_specs=[PASS_GRADESPEC_FORMAT, KOMP_GRADESPEC_FORMAT],
+            allow_other_states=False,
         )
 
         csvgrades.callback(args=args, api=None)
@@ -228,7 +240,15 @@ class TestCallback:
         hook_result_mapping = {
             _marker.generate_repo_name(str(slarse), "week-4"): [
                 create_komp_hookresult(SLARSE_TA)
-            ]
+            ],
+            "list-issues": [
+                plug.HookResult(
+                    hook="list-issues",
+                    status=plug.Status.SUCCESS,
+                    msg=None,
+                    data={"state": plug.IssueState.ALL.value},
+                )
+            ],
         }
         grades_file_contents = tmp_grades_file.read_text("utf8")
         edit_msg_file = tmp_grades_file.parent / "editmsg.txt"
@@ -240,6 +260,7 @@ class TestCallback:
             edit_msg_file=str(edit_msg_file),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT, KOMP_GRADESPEC_FORMAT],
+            allow_other_states=False,
         )
 
         with mock.patch(
@@ -264,6 +285,7 @@ class TestCallback:
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
+            allow_other_states=False,
         )
 
         csvgrades.callback(args=args, api=None)
@@ -287,12 +309,47 @@ class TestCallback:
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
+            allow_other_states=False,
         )
 
         with pytest.raises(_exception.FileError) as exc_info:
             csvgrades.callback(args=args, api=None)
 
-        assert "student(s) {} missing from the grades file".format(missing_team.members[0]) in str(
+        assert "student(s) {} missing from the grades file".format(
+            missing_team.members[0]
+        ) in str(exc_info.value)
+
+    def test_raises_if_state_is_not_all(
+        self, tmp_grades_file, mocked_hook_results
+    ):
+        """Test that a warning is issued if the plugin is run on list-issues
+        results where the state is not ``all`` (i.e. ``repobee list-issues``
+        was not run with the ``--all`` flag). This is important as closed
+        issues should still be taken into account.
+        """
+        args = argparse.Namespace(
+            students=list(TEAMS),
+            hook_results_file="",  # don't care, read_results_file is mocked
+            grades_file=str(tmp_grades_file),
+            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
+            teachers=list(TEACHERS),
+            grade_specs=[PASS_GRADESPEC_FORMAT],
+            allow_other_states=False,
+        )
+        mocked_hook_results["list-issues"] = [plug.HookResult(
+            hook="list-issues",
+            status=plug.Status.SUCCESS,
+            msg=None,
+            # change the state to OPEN, which will cause any closed
+            # grading issues to be missed
+            data={"state": plug.IssueState.OPEN.value},
+        )]
+
+        with pytest.raises(_exception.FileError) as exc_info:
+            csvgrades.callback(args=args, api=None)
+
+        assert "repobee list-issues was not run with the --all flag" in str(
             exc_info.value
         )
 
