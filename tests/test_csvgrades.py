@@ -1,6 +1,9 @@
 import pathlib
 import argparse
 import sys
+import shutil
+
+from unittest import mock
 
 import pytest
 from _repobee import plugin
@@ -34,52 +37,54 @@ FAIL_GRADESPEC_FORMAT = "2:F:[Ff]ail"
 KOMP_GRADESPEC_FORMAT = "3:K:[Kk]omplettering"
 
 
+def create_pass_hookresult(author):
+    pass_issue = plug.Issue(
+        title="Pass",
+        body="This is a pass",
+        number=3,
+        created_at=datetime(1992, 9, 19),
+        author=author,
+    )
+    return plug.HookResult(
+        hook="list-issues",
+        status=plug.Status.SUCCESS,
+        msg=None,
+        data={pass_issue.number: pass_issue.to_dict()},
+    )
+
+
+def create_komp_hookresult(author):
+    komp_issue = plug.Issue(
+        title="Komplettering",
+        body="This is komplettering",
+        number=1,
+        created_at=datetime(2009, 12, 31),
+        author=author,
+    )
+    return plug.HookResult(
+        hook="list-issues",
+        status=plug.Status.SUCCESS,
+        msg=None,
+        data={komp_issue.number: komp_issue.to_dict()},
+    )
+
+
+def create_komp_and_pass_hookresult(author):
+    other = create_komp_hookresult(author)
+    pass_ = create_pass_hookresult(author)
+    return plug.HookResult(
+        hook="list-issues",
+        status=plug.Status.SUCCESS,
+        msg=None,
+        data={**other.data, **pass_.data},
+    )
+
+
 @pytest.fixture
 def mocked_hook_results(mocker):
     """Hook results with passes for glassey-glennol in week-1 and week-2, and
     for slarse in week-4 and week-6.
     """
-
-    def create_pass_hookresult(author):
-        pass_issue = plug.Issue(
-            title="Pass",
-            body="This is a pass",
-            number=3,
-            created_at=datetime(1992, 9, 19),
-            author=author,
-        )
-        return plug.HookResult(
-            hook="list-issues",
-            status=plug.Status.SUCCESS,
-            msg=None,
-            data={pass_issue.number: pass_issue.to_dict()},
-        )
-
-    def create_komp_hookresult(author):
-        komp_issue = plug.Issue(
-            title="Komplettering",
-            body="This is komplettering",
-            number=1,
-            created_at=datetime(2009, 12, 31),
-            author=author,
-        )
-        return plug.HookResult(
-            hook="list-issues",
-            status=plug.Status.SUCCESS,
-            msg=None,
-            data={komp_issue.number: komp_issue.to_dict()},
-        )
-
-    def create_komp_and_pass_hookresult(author):
-        other = create_komp_hookresult(author)
-        pass_ = create_pass_hookresult(author)
-        return plug.HookResult(
-            hook="list-issues",
-            status=plug.Status.SUCCESS,
-            msg=None,
-            data={**other.data, **pass_.data},
-        )
-
     slarse, glassey_glennol = TEAMS
     gen_name = _marker.generate_repo_name
     hook_results = {
@@ -212,6 +217,39 @@ class TestCallback:
             edit_msg_file.read_text("utf8").strip()
             == EXPECTED_EDIT_MSG_MULTI_SPEC_FILE.read_text("utf8").strip()
         )
+
+    def test_does_not_overwrite_lower_priority_grades(self, tmp_grades_file):
+        """Test that e.g. a grade with priority 3 does not overwrite a grade
+        with priority 1 that is already in the grades file.
+        """
+        shutil.copy(str(EXPECTED_GRADES_MULTI_SPEC_FILE), str(tmp_grades_file))
+        slarse, *_ = TEAMS
+        hook_result_mapping = {
+            _marker.generate_repo_name(str(slarse), "week-4"): [
+                create_komp_hookresult(SLARSE_TA)
+            ]
+        }
+        grades_file_contents = tmp_grades_file.read_text("utf8")
+        edit_msg_file = tmp_grades_file.parent / "editmsg.txt"
+        args = argparse.Namespace(
+            students=[slarse],
+            hook_results_file="",  # don't care, read_results_file is mocked
+            grades_file=str(tmp_grades_file),
+            master_repo_names=["week-4"],
+            edit_msg_file=str(edit_msg_file),
+            teachers=list(TEACHERS),
+            grade_specs=[PASS_GRADESPEC_FORMAT, KOMP_GRADESPEC_FORMAT],
+        )
+
+        with mock.patch(
+            "repobee_csvgrades._file.read_results_file",
+            autospec=True,
+            return_value=hook_result_mapping,
+        ):
+            csvgrades.callback(args=args, api=None)
+
+        assert tmp_grades_file.read_text("utf8") == grades_file_contents
+        assert not edit_msg_file.exists()
 
 
 def test_register():

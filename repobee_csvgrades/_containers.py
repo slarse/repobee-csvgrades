@@ -13,7 +13,8 @@ class GradeSpec(
     titles to find grading issues.
     """
 
-    def __new__(cls, format_str: str):
+    @classmethod
+    def from_format(cls, format_str: str):
         r"""Build a GradeSpec tuple from a format string. The format string should
         be on the following form:
 

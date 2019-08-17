@@ -25,8 +25,10 @@ def callback(args: argparse.Namespace, api: None) -> None:
     results_file = pathlib.Path(args.hook_results_file)
     grades_file = pathlib.Path(args.grades_file)
     hook_results_mapping = _file.read_results_file(results_file)
-    grades = _grades.Grades(grades_file, args.master_repo_names)
-    grade_specs = list(map(_containers.GradeSpec, args.grade_specs))
+    grade_specs = list(
+        map(_containers.GradeSpec.from_format, args.grade_specs)
+    )
+    grades = _grades.Grades(grades_file, args.master_repo_names, grade_specs)
     new_grades = _marker.mark_grades(
         grades,
         hook_results_mapping,

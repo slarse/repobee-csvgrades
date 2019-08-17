@@ -1,23 +1,33 @@
 """Class for managing a grades CSV file."""
-
 import pathlib
+import sys
 
 from typing import List
 
+import repobee_plug as plug
+
 from repobee_csvgrades import _file
+from repobee_csvgrades import _containers
 
 
 class Grades:
     """Abstraction of the grades file."""
 
     def __init__(
-        self, grades_file: pathlib.Path, master_repo_names: List[str]
+        self,
+        grades_file: pathlib.Path,
+        master_repo_names: List[str],
+        grade_specs: List[_containers.GradeSpec],
     ):
         self._headers, self._contents = _file.read_grades_file(grades_file)
-        self._original_contents = self._contents
+        self._symbol_to_spec = {spec.symbol: spec for spec in grade_specs}
+        self._symbol_to_spec[""] = _containers.GradeSpec(
+            symbol="", priority=sys.maxsize, regex=""
+        )
         self._usr_to_row, self._repo_to_col = extract_row_and_col_mappings(
             self._headers, self._contents, master_repo_names
         )
+        self._original_contents = self._contents
 
     def __getitem__(self, key):
         usr, repo = key
@@ -33,8 +43,11 @@ class Grades:
 
     def set(self, usr, repo, value) -> str:
         old = self[usr, repo]
-        self[usr, repo] = value
-        return old
+        old_spec = self._symbol_to_spec[old]
+        if old_spec.priority < value.priority:
+            raise plug.PlugError("try to set higher priority grade")
+        self[usr, repo] = value.symbol
+        return old_spec
 
     @property
     def csv(self):

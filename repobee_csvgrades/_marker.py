@@ -9,6 +9,7 @@ import collections
 import itertools
 import re
 import heapq
+import contextlib
 from typing import List
 
 import daiquiri
@@ -63,16 +64,17 @@ def mark_grade(
     if issue_heap:
         spec, issue = issue_heap[0]
         for student in team.members:
-            old = grades.set(student, master_repo_name, spec.symbol)
-            if old != spec.symbol:
-                graded_students.append(student)
-                LOGGER.info(
-                    "{} for {} on {}".format(
-                        spec.symbol, student, master_repo_name
+            with log_plug_error():
+                old = grades.set(student, master_repo_name, spec)
+                if old != spec:
+                    graded_students.append(student)
+                    LOGGER.info(
+                        "{} for {} on {}".format(
+                            spec.symbol, student, master_repo_name
+                        )
                     )
-                )
-                author = issue.author
-                symbol = spec.symbol
+                    author = issue.author
+                    symbol = spec.symbol
 
     return graded_students, symbol, author
 
@@ -128,3 +130,11 @@ def generate_repo_name(team_name: str, master_repo_name: str) -> str:
         master_repo_name: Name of the template repository.
     """
     return "{}-{}".format(team_name, master_repo_name)
+
+
+@contextlib.contextmanager
+def log_plug_error():
+    try:
+        yield
+    except plug.PlugError as exc:
+        LOGGER.warning(str(exc))
