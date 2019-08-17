@@ -2,7 +2,7 @@
 import pathlib
 import sys
 
-from typing import List
+from typing import List, Iterable
 
 import repobee_plug as plug
 
@@ -54,6 +54,15 @@ class Grades:
             raise _exception.GradingError("try to set higher priority grade")
         self[usr, repo] = value.symbol
         return old_spec
+
+    def check_users(self, usernames: Iterable[str]) -> bool:
+        missing_users = set(usernames) - set(self._usr_to_row.keys())
+        if missing_users:
+            raise _exception.FileError(
+                "student(s) {} missing from the grades file".format(
+                    ", ".join(sorted(missing_users))
+                )
+            )
 
     @property
     def csv(self):

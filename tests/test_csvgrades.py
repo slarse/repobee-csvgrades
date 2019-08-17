@@ -14,6 +14,7 @@ from datetime import datetime
 from repobee_csvgrades import csvgrades
 from repobee_csvgrades import _file
 from repobee_csvgrades import _marker
+from repobee_csvgrades import _exception
 
 TEAMS = tuple(
     [
@@ -250,6 +251,50 @@ class TestCallback:
 
         assert tmp_grades_file.read_text("utf8") == grades_file_contents
         assert not edit_msg_file.exists()
+
+    def test_repos_without_hook_results_are_skipped(
+        self, tmp_grades_file, mocked_hook_results
+    ):
+        """Run with extra repos that have no hook results (week-3)"""
+        args = argparse.Namespace(
+            students=list(TEAMS),
+            hook_results_file="",  # don't care, read_results_file is mocked
+            grades_file=str(tmp_grades_file),
+            master_repo_names="week-1 week-2 week-3 week-4 week-6".split(),
+            edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
+            teachers=list(TEACHERS),
+            grade_specs=[PASS_GRADESPEC_FORMAT],
+        )
+
+        csvgrades.callback(args=args, api=None)
+
+        assert _file.read_grades_file(
+            tmp_grades_file
+        ) == _file.read_grades_file(EXPECTED_GRADES_FILE)
+
+    def test_students_missing_from_grades_file_causes_crash(
+        self, tmp_grades_file, mocked_hook_results
+    ):
+        """Test that if a specified student is missing from the grades
+        file, there is a crash.
+        """
+        missing_team = plug.Team(members=["randomdude"])
+        args = argparse.Namespace(
+            students=list(TEAMS) + [missing_team],
+            hook_results_file="",  # don't care, read_results_file is mocked
+            grades_file=str(tmp_grades_file),
+            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
+            teachers=list(TEACHERS),
+            grade_specs=[PASS_GRADESPEC_FORMAT],
+        )
+
+        with pytest.raises(_exception.FileError) as exc_info:
+            csvgrades.callback(args=args, api=None)
+
+        assert "student(s) {} missing from the grades file".format(missing_team.members[0]) in str(
+            exc_info.value
+        )
 
 
 def test_register():

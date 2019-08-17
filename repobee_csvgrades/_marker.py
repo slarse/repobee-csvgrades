@@ -46,6 +46,11 @@ def mark_grade(
     grades, team, master_repo_name, hook_results_mapping, teachers, grade_specs
 ):
     repo_name = generate_repo_name(str(team), master_repo_name)
+    if repo_name not in hook_results_mapping:
+        LOGGER.warning(
+            "hook results for {} missing from JSON file".format(repo_name)
+        )
+        return None, None, None
     list_issues_result = extract_list_issues_results(
         repo_name, hook_results_mapping[repo_name]
     )

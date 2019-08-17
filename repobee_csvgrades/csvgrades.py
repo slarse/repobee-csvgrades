@@ -8,6 +8,7 @@
 import argparse
 import pathlib
 import configparser
+import itertools
 
 import daiquiri
 import repobee_plug as plug
@@ -16,6 +17,7 @@ from repobee_csvgrades import _file
 from repobee_csvgrades import _grades
 from repobee_csvgrades import _marker
 from repobee_csvgrades import _containers
+from repobee_csvgrades import _exception
 
 PLUGIN_NAME = "csvgrades"
 
@@ -30,6 +32,7 @@ def callback(args: argparse.Namespace, api: None) -> None:
         map(_containers.GradeSpec.from_format, args.grade_specs)
     )
     grades = _grades.Grades(grades_file, args.master_repo_names, grade_specs)
+    grades.check_users(itertools.chain.from_iterable([t.members for t in args.students]))
     new_grades = _marker.mark_grades(
         grades,
         hook_results_mapping,
