@@ -17,6 +17,7 @@ import daiquiri
 import repobee_plug as plug
 
 from repobee_csvgrades import _containers
+from repobee_csvgrades import _exception
 
 LOGGER = daiquiri.getLogger(__file__)
 
@@ -64,7 +65,7 @@ def mark_grade(
     if issue_heap:
         spec, issue = issue_heap[0]
         for student in team.members:
-            with log_plug_error():
+            with log_error(_exception.GradingError):
                 old = grades.set(student, master_repo_name, spec)
                 if old != spec:
                     graded_students.append(student)
@@ -133,8 +134,8 @@ def generate_repo_name(team_name: str, master_repo_name: str) -> str:
 
 
 @contextlib.contextmanager
-def log_plug_error():
+def log_error(*errors):
     try:
         yield
-    except plug.PlugError as exc:
+    except errors as exc:
         LOGGER.warning(str(exc))

@@ -7,9 +7,9 @@
 """
 import argparse
 import pathlib
-import daiquiri
 import configparser
 
+import daiquiri
 import repobee_plug as plug
 
 from repobee_csvgrades import _file

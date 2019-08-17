@@ -8,6 +8,7 @@ import repobee_plug as plug
 
 from repobee_csvgrades import _file
 from repobee_csvgrades import _containers
+from repobee_csvgrades import _exception
 
 
 class Grades:
@@ -43,9 +44,14 @@ class Grades:
 
     def set(self, usr, repo, value) -> str:
         old = self[usr, repo]
-        old_spec = self._symbol_to_spec[old]
+        try:
+            old_spec = self._symbol_to_spec[old]
+        except KeyError as exc:
+            raise _exception.FileError(
+                "grades file contains unknown grade symbol {}".format(old)
+            ) from exc
         if old_spec.priority < value.priority:
-            raise plug.PlugError("try to set higher priority grade")
+            raise _exception.GradingError("try to set higher priority grade")
         self[usr, repo] = value.symbol
         return old_spec
 
