@@ -11,17 +11,19 @@ from datetime import datetime
 from repobee_csvgrades import csvgrades
 
 TEAMS = tuple(
-    [plug.Team(members=members) for members in (["slarse"], ["glassey", "glennol"])]
+    [
+        plug.Team(members=members)
+        for members in (["slarse"], ["glassey", "glennol"])
+    ]
 )
 DIR = pathlib.Path(__file__).parent
 GRADES_FILE = DIR / "grades.csv"
 EXPECTED_GRADES_FILE = DIR / "expected_grades.csv"
 EXPECTED_EDIT_MSG_FILE = DIR / "expected_edit_msg.txt"
 
-
-def test_register():
-    """Just test that there is no crash"""
-    plugin.register_plugins([csvgrades])
+SLARSE_TA = "ta_a"
+GLASSEY_GLENNOL_TA = "ta_b"
+TEACHERS = (SLARSE_TA, GLASSEY_GLENNOL_TA)
 
 
 @pytest.fixture
@@ -71,24 +73,34 @@ def mocked_hook_results(mocker):
         )
 
     slarse, glassey_glennol = TEAMS
-    slarse_ta = "ta_a"
-    glassey_glennol_ta = "ta_b"
     gen_name = csvgrades.generate_repo_name
     hook_results = {
         gen_name(str(team), repo_name): [result]
         for team, repo_name, result in [
-            (slarse, "week-1", create_other_hookresult(slarse_ta)),
-            (slarse, "week-2", create_other_hookresult(slarse_ta)),
-            (slarse, "week-4", create_pass_hookresult(slarse_ta)),
-            (slarse, "week-6", create_other_and_pass_hookresult(slarse_ta)),
-            (glassey_glennol, "week-1", create_pass_hookresult(glassey_glennol_ta)),
+            (slarse, "week-1", create_other_hookresult(SLARSE_TA)),
+            (slarse, "week-2", create_other_hookresult(SLARSE_TA)),
+            (slarse, "week-4", create_pass_hookresult(SLARSE_TA)),
+            (slarse, "week-6", create_other_and_pass_hookresult(SLARSE_TA)),
+            (
+                glassey_glennol,
+                "week-1",
+                create_pass_hookresult(GLASSEY_GLENNOL_TA),
+            ),
             (
                 glassey_glennol,
                 "week-2",
-                create_other_and_pass_hookresult(glassey_glennol_ta),
+                create_other_and_pass_hookresult(GLASSEY_GLENNOL_TA),
             ),
-            (glassey_glennol, "week-4", create_other_hookresult(glassey_glennol_ta)),
-            (glassey_glennol, "week-6", create_other_hookresult(glassey_glennol_ta)),
+            (
+                glassey_glennol,
+                "week-4",
+                create_other_hookresult(GLASSEY_GLENNOL_TA),
+            ),
+            (
+                glassey_glennol,
+                "week-6",
+                create_other_hookresult(GLASSEY_GLENNOL_TA),
+            ),
         ]
     }
     mocker.patch(
@@ -107,13 +119,16 @@ def tmp_grades_file(tmpdir):
 
 
 class TestCallback:
-    def test_correctly_marks_passes(self, tmp_grades_file, mocked_hook_results, mocker):
+    def test_correctly_marks_passes(
+        self, tmp_grades_file, mocked_hook_results
+    ):
         args = argparse.Namespace(
             students=list(TEAMS),
             hook_results_file="",  # don't care, read_results_file is mocked
             grades_file=str(tmp_grades_file),
             master_repo_names="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
+            teachers=list(TEACHERS),
         )
 
         csvgrades.callback(args=args, api=None)
@@ -122,7 +137,9 @@ class TestCallback:
             tmp_grades_file
         ) == csvgrades.read_grades_file(EXPECTED_GRADES_FILE)
 
-    def test_writes_edit_msg(self, tmp_grades_file, mocked_hook_results, mocker):
+    def test_writes_edit_msg(
+        self, tmp_grades_file, mocked_hook_results, mocker
+    ):
         edit_msg_file = tmp_grades_file.parent / "editmsg.txt"
         args = argparse.Namespace(
             students=list(TEAMS),
@@ -130,10 +147,37 @@ class TestCallback:
             grades_file=str(tmp_grades_file),
             master_repo_names="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(edit_msg_file),
+            teachers=list(TEACHERS),
         )
 
         csvgrades.callback(args=args, api=None)
 
-        assert edit_msg_file.read_text(
-            sys.getdefaultencoding()
-        ).strip() == EXPECTED_EDIT_MSG_FILE.read_text(sys.getdefaultencoding()).strip()
+        assert (
+            edit_msg_file.read_text("utf8").strip()
+            == EXPECTED_EDIT_MSG_FILE.read_text("utf8").strip()
+        )
+
+    def test_writes_nothing_if_graders_are_not_teachers(
+        self, tmp_grades_file, mocked_hook_results
+    ):
+        edit_msg_file = tmp_grades_file.parent / "editmsg.txt"
+        grades_file_contents = tmp_grades_file.read_text(encoding="utf8")
+        args = argparse.Namespace(
+            students=list(TEAMS),
+            hook_results_file="",  # don't care, read_results_file is mocked
+            grades_file=str(tmp_grades_file),
+            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            edit_msg_file=str(edit_msg_file),
+            teachers=["glassey", "slarse"],  # wrong teachers!
+        )
+
+        csvgrades.callback(args=args, api=None)
+
+        assert tmp_grades_file.read_text("utf8") == grades_file_contents
+        assert not edit_msg_file.exists()
+
+def test_register():
+    """Just test that there is no crash"""
+    plugin.register_plugins([csvgrades])
+
+

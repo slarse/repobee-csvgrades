@@ -14,6 +14,7 @@ import csv
 import pathlib
 import itertools
 import collections
+import daiquiri
 
 from typing import List
 
@@ -21,6 +22,8 @@ from typing import List
 import repobee_plug as plug
 
 PLUGIN_NAME = "csvgrades"
+
+LOGGER = daiquiri.getLogger(__file__)
 
 
 def callback(args: argparse.Namespace, api: None) -> None:
@@ -34,16 +37,28 @@ def callback(args: argparse.Namespace, api: None) -> None:
         hook_results_mapping,
         args.students,
         args.master_repo_names,
+        args.teachers,
     )
-    write_edit_msg(new_grades, args.master_repo_names, pathlib.Path(args.edit_msg_file))
-    write_grades_file(grades_file, grades_headers, marked_grades)
+    if new_grades:
+        write_edit_msg(
+            new_grades,
+            args.master_repo_names,
+            pathlib.Path(args.edit_msg_file),
+        )
+        write_grades_file(grades_file, grades_headers, marked_grades)
+    else:
+        LOGGER.warning("No new grades reported")
 
 
 def write_edit_msg(new_grades, master_repo_names, edit_msg_file):
     sorted_repo_names = ", ".join(sorted(master_repo_names))
-    format_grade = lambda student, mn, grade: "{} {} {}".format(student, mn, grade)
+    format_grade = lambda student, mn, grade: "{} {} {}".format(
+        student, mn, grade
+    )
     teacher_notifications = [
-        "@{}\n{}".format(teacher, "\n".join([format_grade(*tup) for tup in grades]))
+        "@{}\n{}".format(
+            teacher, "\n".join([format_grade(*tup) for tup in grades])
+        )
         for teacher, grades in new_grades.items()
     ]
     msg = "Report grades for {}\n\n{}".format(
@@ -53,9 +68,16 @@ def write_edit_msg(new_grades, master_repo_names, edit_msg_file):
 
 
 def mark_grades(
-    grades_headers, grades_file_contents, hook_results_mapping, teams, master_repo_names
+    grades_headers,
+    grades_file_contents,
+    hook_results_mapping,
+    teams,
+    master_repo_names,
+    teachers,
 ):
-    grades_file_contents = [list(row) for row in grades_file_contents]  # safe copy
+    grades_file_contents = [
+        list(row) for row in grades_file_contents
+    ]  # safe copy
     username_to_row_nr, master_repo_to_col_nr = extract_row_and_col_mappings(
         grades_headers, grades_file_contents, master_repo_names
     )
@@ -71,7 +93,22 @@ def mark_grades(
             for issue_dict in list_issues_result.data.values()
         )
         pass_issues = [issue for issue in issues if issue.title == "Pass"]
-        if pass_issues:
+        authorized = [
+            issue for issue in pass_issues if issue.author in teachers
+        ]
+        unauthorized = [
+            issue for issue in pass_issues if issue.author not in teachers
+        ]
+
+        if unauthorized:
+            for issue in unauthorized:
+                LOGGER.warning(
+                    "Grading issue {}#{} by unauthorized user {}".format(
+                        repo_name, issue.number, issue.author
+                    )
+                )
+
+        if authorized:
             pass_issue = pass_issues[0]
             for student in team.members:
                 col = master_repo_to_col_nr[master_repo_name]
@@ -82,7 +119,11 @@ def mark_grades(
                     new_grades[pass_issue.author].append(
                         (student, master_repo_name, grade)
                     )
-                    print("{} for {} on {}".format(grade, student, master_repo_name))
+                    LOGGER.info(
+                        "{} for {} on {}".format(
+                            grade, student, master_repo_name
+                        )
+                    )
 
     return grades_file_contents, new_grades
 
@@ -91,7 +132,8 @@ def extract_row_and_col_mappings(
     grades_headers, grades_file_contents, master_repo_names
 ):
     master_repo_to_col_nr = {
-        repo_name: grades_headers.index(repo_name) for repo_name in master_repo_names
+        repo_name: grades_headers.index(repo_name)
+        for repo_name in master_repo_names
     }
     username_col = grades_headers.index("username")
     username_to_row_nr = {
@@ -108,7 +150,9 @@ def mark(grades_file_contents, row, col, grade) -> str:
 
 
 def write_grades_file(grades_file, headers, content):
-    with open(str(grades_file), mode="w", encoding=sys.getdefaultencoding()) as dst:
+    with open(
+        str(grades_file), mode="w", encoding=sys.getdefaultencoding()
+    ) as dst:
         writer = csv.writer(dst, delimiter=",")
         writer.writerows([headers, *content])
 
@@ -124,9 +168,12 @@ def read_results_file(results_file):
 def read_grades_file(grades_file):
     if not grades_file.is_file():
         raise plug.PlugError("no such file: {}".format(str(grades_file)))
-    with open(str(grades_file), encoding=sys.getdefaultencoding(), mode="r") as file:
+    with open(
+        str(grades_file), encoding=sys.getdefaultencoding(), mode="r"
+    ) as file:
         grades_file_contents = [
-            [cell.strip() for cell in row] for row in csv.reader(file, delimiter=",")
+            [cell.strip() for cell in row]
+            for row in csv.reader(file, delimiter=",")
         ]
         return grades_file_contents[0], grades_file_contents[1:]
 
@@ -138,7 +185,9 @@ def extract_list_issues_results(
         if result.hook == "list-issues":
             return result
     raise plug.exception.PlugError(
-        "hook results for {} does not contain 'list-issues' result".format(repo_name)
+        "hook results for {} does not contain 'list-issues' result".format(
+            repo_name
+        )
     )
 
 
@@ -196,11 +245,25 @@ def create_extension_command():
         type=str,
         default="edit_msg.txt",
     )
+    parser.add_argument(
+        "-t",
+        "--teachers",
+        help="One or more space-separated usernames of teachers/TAs that are "
+        "authorized to open grading issues. If a grading issue is found by a "
+        "user not in this list, a warning is issued and the grade is not "
+        "recorded.",
+        required=True,
+        nargs="+",
+        type=str,
+    )
     return plug.ExtensionCommand(
         parser=parser,
         name="csvgrades",
         help="Blabla",
         description="More blaba",
         callback=callback,
-        requires_base_parsers=[plug.BaseParser.REPO_NAMES, plug.BaseParser.STUDENTS],
+        requires_base_parsers=[
+            plug.BaseParser.REPO_NAMES,
+            plug.BaseParser.STUDENTS,
+        ],
     )
