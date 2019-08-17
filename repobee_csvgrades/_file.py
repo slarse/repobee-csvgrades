@@ -1,0 +1,57 @@
+"""Utility functions for file I/O.
+
+.. module:: _file
+    :synopsis: Utility functions for file I/O.
+
+.. moduleauthor:: Simon Larsén
+"""
+import csv
+import sys
+
+import repobee_plug as plug
+
+
+def read_results_file(results_file):
+    if not results_file.is_file():
+        raise plug.PlugError("no such file: {}".format(str(results_file)))
+    return plug.json_to_result_mapping(
+        results_file.read_text(encoding=sys.getdefaultencoding())
+    )
+
+
+def read_grades_file(grades_file):
+    if not grades_file.is_file():
+        raise plug.PlugError("no such file: {}".format(str(grades_file)))
+    with open(
+        str(grades_file), encoding=sys.getdefaultencoding(), mode="r"
+    ) as file:
+        grades_file_contents = [
+            [cell.strip() for cell in row]
+            for row in csv.reader(file, delimiter=",")
+        ]
+        return grades_file_contents[0], grades_file_contents[1:]
+
+
+def write_edit_msg(new_grades, master_repo_names, edit_msg_file):
+    sorted_repo_names = ", ".join(sorted(master_repo_names))
+    format_grade = lambda student, mn, grade: "{} {} {}".format(
+        student, mn, grade
+    )
+    teacher_notifications = [
+        "@{}\n{}".format(
+            teacher, "\n".join([format_grade(*tup) for tup in grades])
+        )
+        for teacher, grades in new_grades.items()
+    ]
+    msg = "Report grades for {}\n\n{}".format(
+        sorted_repo_names, "\n\n".join(teacher_notifications)
+    )
+    edit_msg_file.write_text(msg, encoding=sys.getdefaultencoding())
+
+
+def write_grades_file(grades_file, grades):
+    with open(
+        str(grades_file), mode="w", encoding=sys.getdefaultencoding()
+    ) as dst:
+        writer = csv.writer(dst, delimiter=",")
+        writer.writerows(grades.csv)

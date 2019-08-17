@@ -9,6 +9,8 @@ import shutil
 from datetime import datetime
 
 from repobee_csvgrades import csvgrades
+from repobee_csvgrades import _file
+from repobee_csvgrades import _marker
 
 TEAMS = tuple(
     [
@@ -73,7 +75,7 @@ def mocked_hook_results(mocker):
         )
 
     slarse, glassey_glennol = TEAMS
-    gen_name = csvgrades.generate_repo_name
+    gen_name = _marker.generate_repo_name
     hook_results = {
         gen_name(str(team), repo_name): [result]
         for team, repo_name, result in [
@@ -104,7 +106,7 @@ def mocked_hook_results(mocker):
         ]
     }
     mocker.patch(
-        "repobee_csvgrades.csvgrades.read_results_file",
+        "repobee_csvgrades._file.read_results_file",
         return_value=hook_results,
         autospec=True,
     )
@@ -133,9 +135,9 @@ class TestCallback:
 
         csvgrades.callback(args=args, api=None)
 
-        assert csvgrades.read_grades_file(
+        assert _file.read_grades_file(
             tmp_grades_file
-        ) == csvgrades.read_grades_file(EXPECTED_GRADES_FILE)
+        ) == _file.read_grades_file(EXPECTED_GRADES_FILE)
 
     def test_writes_edit_msg(
         self, tmp_grades_file, mocked_hook_results, mocker
@@ -176,8 +178,7 @@ class TestCallback:
         assert tmp_grades_file.read_text("utf8") == grades_file_contents
         assert not edit_msg_file.exists()
 
+
 def test_register():
     """Just test that there is no crash"""
     plugin.register_plugins([csvgrades])
-
-
