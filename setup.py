@@ -15,7 +15,7 @@ with open(
     assert re.match(r"^\d+(\.\d+){2}(-(alpha|beta|rc)(\.\d+)?)?$", __version__)
 
 test_requirements = ["pytest", "repobee"]
-required = ["repobee-plug==0.10.0-alpha.1"]
+required = ["repobee-plug==0.10.0-alpha.2"]
 
 setup(
     name="repobee-csvgrades",
