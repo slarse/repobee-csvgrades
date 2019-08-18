@@ -34,7 +34,9 @@ def callback(args: argparse.Namespace, api: None) -> None:
         )
     if (
         not args.allow_other_states
-        and plug.IssueState(hook_results_mapping["list-issues"][0].data["state"])
+        and plug.IssueState(
+            hook_results_mapping["list-issues"][0].data["state"]
+        )
         != plug.IssueState.ALL
     ):
         raise _exception.FileError(
@@ -74,7 +76,7 @@ class CSVGradeCommand(plug.Plugin):
     def __init__(self):
         self._hook_results_file = None
         self._grades_file = None
-        self._edit_msg_file = "edit_msg.txt"
+        self._edit_msg_file = None
         self._grade_specs = None
         self._teachers = None
 
@@ -135,6 +137,7 @@ class CSVGradeCommand(plug.Plugin):
             help="Filepath specifying where to put the edit message. "
             "Defaults to 'edit_msg.txt'",
             type=str,
+            required=not self._edit_msg_file,
             default=self._edit_msg_file,
             dest="edit_msg_file",
         )
