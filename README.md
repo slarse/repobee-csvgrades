@@ -36,8 +36,11 @@ regex is considered a grading issues of that spec.
 > **Important:** Your grade spec regexes should _not_ overlap (i.e. be able to
 > match the same strings). If they do, behavior is undefined.
 
-Grade specs are specified by the `--grade-specs` option. Example: `--grade-specs
-'1:P:[Pp]ass' '2:F:[Ff]ail' '3:C:[Cc]orrection'`
+Grade specs are specified by the `--grade-specs` option. Example:
+
+```
+--grade-specs '1:P:[Pp]ass' '2:F:[Ff]ail' '3:C:[Cc]orrection'
+```
 
 ### The hook results file (`--hook-results-file` option)
 `record-grades` operates on a file with a JSON database produced by the
@@ -51,7 +54,10 @@ file, you can supply the `--allow-other-states` flag to `record-grades`, which
 disregards how the hook results were collected.
 
 The hook results file is specified by the `--hook-results-file` option. Example:
-`--hook-results-file ~/some_course/2019/hook_results_jan.json`
+
+```
+--hook-results-file ~/some_course/2019/hook_results_jan.json
+```
 
 ### The grades file (`--grades-file` option)
 `record-grades` writes grades to a CSV file that we refer to as the _grades
@@ -95,7 +101,10 @@ There are a few additional things to keep in mind with the grades file.
     are entered.
 
 The grades file is specified by the `--grades-file` option. Example:
-`--grades-file ~/some_course/2019/grades.csv`
+
+```
+--grades-file ~/some_course/2019/grades.csv
+```
 
 ### The edit message file (`--edit-msg-file` option)
 Each time you run `record-grades`, a file is produced specifying what new grades
@@ -121,7 +130,11 @@ been collected will be notified, and the extra thorough ones can even inspect
 the diff to make sure everything is OK.
 
 The destination for the edit message file is specified by the `--edit-msg-file`
-option. Example: `--edit-msg-file edit_msg.txt`
+option. Example:
+
+```
+--edit-msg-file edit_msg.txt
+```
 
 ### Authorized teachers (`--teachers` option)
 The `record-grades` command requires you to specify a set of teachers that are
@@ -131,8 +144,11 @@ emitted. This is both to alert the user about potential attempts at foul play,
 but also to help identify teachers that are actually authorized, but have not
 been included in the list.
 
-Teachers are specified with the `--teachers` option. Example: `--teachers ta_a
-ta_b`
+Teachers are specified with the `--teachers` option. Example: 
+
+```
+--teachers ta_a ta_b
+```
 
 ## Configuration file section
 `repobee-csvgrades` can fetch information from the
