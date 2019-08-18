@@ -139,8 +139,8 @@ ta_b`
 [RepoBee configuration file](https://repobee.readthedocs.io/en/stable/configuration.html#configuration-file),
 under the `csvgrades` section. All of the command line options can be
 configured. Here is an example of a complete configuration file that sets
-the same defaults as shown in the examples that end each subsection in [Core
-concepts](#usage).
+the same defaults as shown in the examples that end each subsection in the
+[Usage](#usage) section.
 
 ```
 [DEFAULTS]
