@@ -5,17 +5,18 @@ with open("README.md", mode="r", encoding="utf-8") as f:
     readme = f.read()
 
 # parse the version instead of importing it to avoid dependency-related crashes
-with open(
-    "repobee_csvgrades/__version.py",
-    mode="r",
-    encoding="utf-8",
-) as f:
+with open("repobee_csvgrades/__version.py", mode="r", encoding="utf-8") as f:
     line = f.readline()
     __version__ = line.split("=")[1].strip(" '\"\n")
     assert re.match(r"^\d+(\.\d+){2}(-(alpha|beta|rc)(\.\d+)?)?$", __version__)
 
-test_requirements = ["pytest", "repobee"]
-required = ["repobee-plug==0.10.0-alpha.2"]
+test_requirements = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "tox",
+]
+required = ["repobee-plug>=0.10.0", "repobee>=2.1.0"]
 
 setup(
     name="repobee-csvgrades",
@@ -25,9 +26,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Simon Larsén",
     author_email="slarse@kth.se",
-    url="https://github.com/"
-    "slarse"
-    "/repobee-csvgrades",
+    url="https://github.com/slarse/repobee-csvgrades",
     download_url="https://github.com/"
     "slarse"
     "/repobee-csvgrades"
