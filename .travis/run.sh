@@ -3,6 +3,9 @@
 function run_flake8() {
     pip install flake8
     flake8 .
+    if [[ ! $? == 0 ]]; then
+        exit 1
+    fi
 }
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
