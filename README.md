@@ -3,8 +3,53 @@ A plugin for reporting grades into a CSV file based on issue titles.
 `repobee-csvgrades` adds the `record-grades` command, which operates on the
 JSON file produced by running `repobee list-issues` with the
 `--hook-results-file` option. The idea is pretty simple: find issues in student
-repositories that match certain user-defined conditions and report the
-corresponding grades into a (preferably version controlled) CSV file.
+repositories that match certain user-defined conditions (title + who opened it)
+and report the corresponding grades into a (preferably version controlled) CSV
+file.
+
+## Example use case
+Say that you have three students, `slarse`, `glassey` and `glennol`, three tasks
+`task-1`, `task-2` and `task-3`, and that you (and any colleagues) open issues
+with titles `Pass` for pass and `Fail` for fail. `repobee-csvgrades` can then
+be configured to look for issues with those titles (using a regex), and write
+them into a grades sheet that looks something like this:
+
+```
+            name,username,task-1,task-2,task-3
+    Simon Larsén,  slarse,     P,     P,     F
+ Richard Glassey, glassey,     P,     P,     P
+    Glenn Olsson, glennol,     P,     P,     P
+```
+
+> **GitHub and CSV files:** GitHub 
+> [renders CSV files really nicely](https://help.github.com/en/articles/rendering-csv-and-tsv-data),
+> they are even searchable!
+
+Only grades from issues that were opened by authorized teachers, as specified
+by you, are written to the file. Grades are mapped from issue title to a
+symbol, so the CSV file becomes more readable (here there's for example `P` for
+`Pass`). You also assign grades a priority, so if for example there's both a
+fail and a pass issue in a repo, it will pick the one that you've specified is
+most important.  Additionally, each time new grades are reported, a summary
+message will be produced that looks something like this:
+
+```
+Record grades for task-3
+
+@ta_a
+slarse task-3 F
+
+@ta_b
+glassey task-3 P
+```
+
+The `@ta_a` and `@ta_b` are mentions of the teachers/TAs (with usernames `ta_a`
+and `ta_b`) that opened the issues. The intention is that this message should be
+used as a commit message for the grades file, so that the people who reported
+grades get notified of which grades have been written to the grades sheet.
+
+That's just a quick introduction, see [Usage](#usage) for a more detailed
+description.
 
 ## Install
 Currently, the best way to install is directly from the Git repo.
@@ -114,7 +159,7 @@ example, if `slarse` has teacher `ta_a`, and `glassey` has teacher `ta_b`, and
 they both got new grades for `task-3`, the edit message might look like ths:
 
 ```
-Record grades for week-1
+Record grades for task-3
 
 @ta_a
 slarse task-3 F
