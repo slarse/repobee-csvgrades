@@ -62,10 +62,12 @@ Eventually, `repobee-csvgrades` will be moved to PyPi so you can just `pip
 install` it like any other package.
 
 ## Usage
-`repobee-csvgrades` is easy to use and highly customizable. There are a few key
-parts to familiarize yourself with before using it, however. The following
-sections explain the command line options in depth. Also don't miss the fact
-that you can configure all options in the
+`repobee-csvgrades` is easy to use and highly customizable. First of all, you
+need to know how to use a plugin for RepoBee, see the
+[RepoBee plugin docs](https://repobee.readthedocs.io/en/stable/plugins.html).
+Then, there are a few key parts to familiarize yourself with before using it,
+however. The following sections explain the command line options in depth. Also
+don't miss the fact that you can configure all options in the
 [configuration file](#configuration-file-section).
 
 ### The grade specification (`--grade-specs` option)
