@@ -16,7 +16,6 @@ import daiquiri
 
 import repobee_plug as plug
 
-from repobee_csvgrades import _containers
 from repobee_csvgrades import _exception
 
 LOGGER = daiquiri.getLogger(__file__)
