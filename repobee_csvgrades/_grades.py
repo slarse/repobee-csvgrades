@@ -4,8 +4,6 @@ import sys
 
 from typing import List, Iterable
 
-import repobee_plug as plug
-
 from repobee_csvgrades import _file
 from repobee_csvgrades import _containers
 from repobee_csvgrades import _exception

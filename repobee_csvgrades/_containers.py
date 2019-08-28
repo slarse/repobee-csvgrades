@@ -22,19 +22,19 @@ class GradeSpec(
 
         The expression must match the regex (\d+):([A-Za-z\d]+):(.+)
 
-        <PRIORITY> is a positive integer value specifying how important the grade
-        is. If multiple grading issues are found in the same repository, the one
-        with the lowest priority is reported.
+        <PRIORITY> is a positive integer value specifying how important the
+        grade is. If multiple grading issues are found in the same repository,
+        the one with the lowest priority is reported.
 
-        <SYMBOL> is one or more characters specifying how the grade is represented
-        in the CSV grade sheet. Only characters matching the regex [A-Za-z0-9] are
-        accepted.
+        <SYMBOL> is one or more characters specifying how the grade is
+        represented in the CSV grade sheet. Only characters matching the regex
+        [A-Za-z0-9] are accepted.
 
         <REGEX> is any valid regex to match against issue titles.
 
-        For example, the format string "P:1:[Pp]ass" will specifies a grade spec
-        with symbol P, priority 1 (the lowest possible priority) and will match the
-        titles "Pass" and "pass".
+        For example, the format string "P:1:[Pp]ass" will specifies a grade
+        spec with symbol P, priority 1 (the lowest possible priority) and will
+        match the titles "Pass" and "pass".
 
         Args:
             format_str: A grade spec format string as defined above.

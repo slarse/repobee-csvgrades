@@ -34,9 +34,10 @@ def read_grades_file(grades_file):
 
 def write_edit_msg(new_grades, master_repo_names, edit_msg_file):
     sorted_repo_names = ", ".join(sorted(master_repo_names))
-    format_grade = lambda student, mn, grade: "{} {} {}".format(
-        student, mn, grade
-    )
+
+    def format_grade(student, mn, grade):
+        return "{} {} {}".format(student, mn, grade)
+
     teacher_notifications = [
         "@{}\n{}".format(
             teacher, "\n".join([format_grade(*tup) for tup in grades])

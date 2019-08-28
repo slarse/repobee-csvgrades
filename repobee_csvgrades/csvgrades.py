@@ -1,7 +1,8 @@
 """A plugin for reporting grades into a CSV file based on issue titles
 
 .. module:: csvgrades
-    :synopsis: A plugin for reporting grades into a CSV file based on issue titles
+    :synopsis: A plugin for reporting grades into a CSV file based on issue
+        titles
 
 .. moduleauthor:: Simon Larsén
 """
@@ -28,7 +29,7 @@ def callback(args: argparse.Namespace, api: None) -> None:
     results_file = pathlib.Path(args.hook_results_file)
     grades_file = pathlib.Path(args.grades_file)
     hook_results_mapping = _file.read_results_file(results_file)
-    if not "list-issues" in hook_results_mapping:
+    if "list-issues" not in hook_results_mapping:
         raise _exception.FileError(
             "can't locate list-issues metainfo in hook results"
         )
@@ -144,7 +145,10 @@ class CSVGradeCommand(plug.Plugin):
         parser.add_argument(
             "--gs",
             "--grade-specs",
-            help="One or more grade specifications on the form <PRIORITY>:<SYMBOL>:<REGEX>",
+            help=(
+                "One or more grade specifications on the form "
+                "<PRIORITY>:<SYMBOL>:<REGEX>. Example: 1:P:[Pp]ass"
+            ),
             type=str,
             required=not self._grade_specs,
             default=self._grade_specs,
@@ -154,10 +158,12 @@ class CSVGradeCommand(plug.Plugin):
         parser.add_argument(
             "-t",
             "--teachers",
-            help="One or more space-separated usernames of teachers/TAs that are "
-            "authorized to open grading issues. If a grading issue is found by a "
-            "user not in this list, a warning is issued and the grade is not "
-            "recorded.",
+            help=(
+                "One or more space-separated usernames of teachers/TAs "
+                "that are authorized to open grading issues. If a "
+                "grading issue is found by a user not in this list, "
+                "a warning is logged and the grade is not recorded."
+            ),
             type=str,
             required=not self._teachers,
             default=self._teachers,

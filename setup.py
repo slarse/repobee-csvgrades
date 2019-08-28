@@ -10,18 +10,15 @@ with open("repobee_csvgrades/__version.py", mode="r", encoding="utf-8") as f:
     __version__ = line.split("=")[1].strip(" '\"\n")
     assert re.match(r"^\d+(\.\d+){2}(-(alpha|beta|rc)(\.\d+)?)?$", __version__)
 
-test_requirements = [
-    "pytest",
-    "pytest-cov",
-    "pytest-mock",
-    "tox",
-]
+test_requirements = ["pytest", "pytest-cov", "pytest-mock", "tox"]
 required = ["repobee-plug>=0.10.0", "repobee>=2.1.0"]
 
 setup(
     name="repobee-csvgrades",
     version=__version__,
-    description="A plugin for reporting grades into a CSV file based on issue titles",
+    description=(
+        "A plugin for reporting grades into a CSV file based on issue titles"
+    ),
     long_description=readme,
     long_description_content_type="text/markdown",
     author="Simon Larsén",

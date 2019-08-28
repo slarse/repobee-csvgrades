@@ -1,15 +1,13 @@
 import pathlib
 import argparse
-import sys
 import shutil
-
+from datetime import datetime
 from unittest import mock
 
 import pytest
-from _repobee import plugin
+
 import repobee_plug as plug
-import shutil
-from datetime import datetime
+from _repobee import plugin
 
 from repobee_csvgrades import csvgrades
 from repobee_csvgrades import _file
@@ -337,14 +335,16 @@ class TestCallback:
             grade_specs=[PASS_GRADESPEC_FORMAT],
             allow_other_states=False,
         )
-        mocked_hook_results["list-issues"] = [plug.HookResult(
-            hook="list-issues",
-            status=plug.Status.SUCCESS,
-            msg=None,
-            # change the state to OPEN, which will cause any closed
-            # grading issues to be missed
-            data={"state": plug.IssueState.OPEN.value},
-        )]
+        mocked_hook_results["list-issues"] = [
+            plug.HookResult(
+                hook="list-issues",
+                status=plug.Status.SUCCESS,
+                msg=None,
+                # change the state to OPEN, which will cause any closed
+                # grading issues to be missed
+                data={"state": plug.IssueState.OPEN.value},
+            )
+        ]
 
         with pytest.raises(_exception.FileError) as exc_info:
             csvgrades.callback(args=args, api=None)
