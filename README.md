@@ -1,4 +1,12 @@
 # repobee-csvgrades
+
+[![Build Status](https://travis-ci.com/slarse/repobee-csvgrades.svg)](https://travis-ci.com/slarse/repobee-csvgrades)
+[![Code Coverage](https://codecov.io/gh/slarse/repobee-csvgrades/branch/master/graph/badge.svg)](https://codecov.io/gh/slarse/repobee-csvgrades)
+![Supported Python Versions](https://img.shields.io/badge/python-3.5%2C%203.6%2C%203.7%2C%203.8-blue.svg)
+![Supported Platforms](https://img.shields.io/badge/platforms-Linux%2C%20macOS-blue.svg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 A plugin for reporting grades into a CSV file based on issue titles.
 `repobee-csvgrades` adds the `record-grades` command, which operates on the
 JSON file produced by running `repobee list-issues` with the
@@ -21,7 +29,7 @@ them into a grades sheet that looks something like this:
     Glenn Olsson, glennol,     P,     P,     P
 ```
 
-> **GitHub and CSV files:** GitHub 
+> **GitHub and CSV files:** GitHub
 > [renders CSV files really nicely](https://help.github.com/en/articles/rendering-csv-and-tsv-data),
 > they are even searchable!
 
@@ -125,9 +133,9 @@ is strongly recommended that you keep this file in version control.
 
 ```
             name,username,task-1,task-2,task-3,task-4,task-5,task-6
-    Simon Larsén,  slarse,     P,     P,     F,      ,      ,      
- Richard Glassey, glassey,     P,     P,     P,      ,      ,      
-    Glenn Olsson, glennol,     P,     P,     P,      ,      ,      
+    Simon Larsén,  slarse,     P,     P,     F,      ,      ,  
+ Richard Glassey, glassey,     P,     P,     P,      ,      ,  
+    Glenn Olsson, glennol,     P,     P,     P,      ,      ,  
 ```
 
 There are a few additional things to keep in mind with the grades file.
@@ -191,7 +199,7 @@ emitted. This is both to alert the user about potential attempts at foul play,
 but also to help identify teachers that are actually authorized, but have not
 been included in the list.
 
-Teachers are specified with the `--teachers` option. Example: 
+Teachers are specified with the `--teachers` option. Example:
 
 ```
 --teachers ta_a ta_b
