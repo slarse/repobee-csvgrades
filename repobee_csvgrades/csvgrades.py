@@ -99,7 +99,7 @@ class CSVGradeCommand(plug.Plugin):
         return [
             name.strip()
             for name in config_parser.get(
-                PLUGIN_NAME, "teachers", fallback=[]
+                PLUGIN_NAME, "teachers", fallback=""
             ).split(",")
         ]
 
