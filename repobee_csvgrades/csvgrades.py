@@ -64,7 +64,7 @@ def callback(args: argparse.Namespace, api: None) -> None:
     )
     if new_grades:
         _file.write_edit_msg(
-            new_grades,
+            sorted(new_grades.items()),
             args.master_repo_names,
             pathlib.Path(args.edit_msg_file),
         )

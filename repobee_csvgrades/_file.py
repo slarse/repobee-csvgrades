@@ -42,7 +42,7 @@ def write_edit_msg(new_grades, master_repo_names, edit_msg_file):
         "@{}\n{}".format(
             teacher, "\n".join([format_grade(*tup) for tup in grades])
         )
-        for teacher, grades in new_grades.items()
+        for teacher, grades in new_grades
     ]
     msg = "Report grades for {}\n\n{}".format(
         sorted_repo_names, "\n\n".join(teacher_notifications)
