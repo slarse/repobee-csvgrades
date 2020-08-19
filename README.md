@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/slarse/repobee-csvgrades.svg)](https://travis-ci.com/slarse/repobee-csvgrades)
 [![Code Coverage](https://codecov.io/gh/slarse/repobee-csvgrades/branch/master/graph/badge.svg)](https://codecov.io/gh/slarse/repobee-csvgrades)
-![Supported Python Versions](https://img.shields.io/badge/python-3.5%2C%203.6%2C%203.7%2C%203.8-blue)
+![Supported Python Versions](https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8-blue)
 ![Supported Platforms](https://img.shields.io/badge/platforms-Linux%2C%20macOS-blue.svg)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
