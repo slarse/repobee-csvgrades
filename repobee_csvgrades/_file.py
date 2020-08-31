@@ -7,23 +7,24 @@
 """
 import csv
 import sys
+import pathlib
 
 import repobee_plug as plug
 
 
 def read_results_file(results_file):
     if not results_file.is_file():
-        raise plug.PlugError("no such file: {}".format(str(results_file)))
+        raise plug.PlugError(f"no such file: {str(results_file)}")
     return plug.json_to_result_mapping(
         results_file.read_text(encoding=sys.getdefaultencoding())
     )
 
 
-def read_grades_file(grades_file):
+def read_grades_file(grades_file: pathlib.Path):
     if not grades_file.is_file():
-        raise plug.PlugError("no such file: {}".format(str(grades_file)))
+        raise plug.PlugError(f"no such file: {str(grades_file)}")
     with open(
-        str(grades_file), encoding=sys.getdefaultencoding(), mode="r"
+        grades_file, encoding=sys.getdefaultencoding(), mode="r"
     ) as file:
         grades_file_contents = [
             [cell.strip() for cell in row]

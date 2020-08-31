@@ -12,14 +12,15 @@ import configparser
 import itertools
 
 import daiquiri
+
 import repobee_plug as plug
-
-from repobee_csvgrades import _file
-from repobee_csvgrades import _grades
-from repobee_csvgrades import _marker
-from repobee_csvgrades import _containers
-from repobee_csvgrades import _exception
-
+from repobee_csvgrades import (
+    _file,
+    _grades,
+    _marker,
+    _containers,
+    _exception,
+)
 PLUGIN_NAME = "csvgrades"
 
 LOGGER = daiquiri.getLogger(__file__)
@@ -31,7 +32,6 @@ grades_category = plug.cli.category(
     description="Used to gather all student grades and save them insade a "
     "CSV file."
 )
-
 
 def callback(args: argparse.Namespace) -> None:
     results_file = args.hook_results_file
@@ -83,6 +83,9 @@ def callback(args: argparse.Namespace) -> None:
 
 class CSVGradeCommand(plug.Plugin, plug.cli.Command):
 
+    def command(self):
+        callback(self.args)
+
     __settings__ = plug.cli.command_settings(
         help="record grades from issues into a CSV file",
         description="Record grades from issues into a CSV file. Grade "
@@ -97,20 +100,19 @@ class CSVGradeCommand(plug.Plugin, plug.cli.Command):
         "at https://github.com/slarse/repobee-csvgrades",
         action=grades_category.record,
         base_parsers=[
-            plug.BaseParser.REPO_NAMES,
+            plug.BaseParser.ASSIGNMENTS,
             plug.BaseParser.STUDENTS,
         ]
     )
 
     allow_other_states = plug.cli.flag(
-        short_name="-a",
         help="Allow other list-issues states than 'all'. If this flag is "
-        "not specified , the 'list-issues' command must have been run "
+        "not specified, the 'issues list' command must have been run "
         "with the '--all' flag.",
         default=False,
     )
     teachers = plug.cli.option(
-        short_name="--gs",
+        short_name="-t",
         help=(
             "One or more space-separated usernames of teachers/TAs "
             "that are authorized to open grading issues. If a "
@@ -118,47 +120,39 @@ class CSVGradeCommand(plug.Plugin, plug.cli.Command):
             "a warning is logged and the grade is not recorded."
         ),
         argparse_kwargs={"nargs": "+"},
+        configurable=True,
+        required=True,
     )
     grade_specs = plug.cli.option(
         short_name="--gs",
-        help=(
-            "One or more grade specifications on the form "
-            "<PRIORITY>:<SYMBOL>:<REGEX>. Example: 1:P:[Pp]ass"
-        ),
+        help="One or more grade specifications on the form "
+            "<PRIORITY>:<SYMBOL>:<REGEX>. Example: 1:P:[Pp]ass",
         argparse_kwargs={"nargs": "+"},
+        configurable=True,
+        required=True,
     )
     edit_msg_file = plug.cli.option(
         short_name="--ef",
-        help="filepath specifying where to put the edit message. "
-        "Defaults to 'edit_msg.txt'",
+        help="filepath specifying where to put the edit message.",
         converter=pathlib.Path,
+        configurable=True,
+        required=True,
     )
     grades_file = plug.cli.option(
         short_name="--gf",
         help="path to the csv file with student grades",
         converter=pathlib.Path,
+        configurable=True,
+        required=True,
     )
     hook_results_file = plug.cli.option(
         short_name="--hf",
         help="path to an existing hook results file",
         converter=pathlib.Path,
+        configurable=True,
+        required=True,
     )
 
-    def command(self):
-        callback(self.args)
-
-    def config_hook(self, config_parser: configparser.ConfigParser):
-        self._hook_results_file = config_parser.get(
-            PLUGIN_NAME, "hook_results_file", fallback=self._hook_results_file
-        )
-        self._grades_file = config_parser.get(
-            PLUGIN_NAME, "grades_file", fallback=self._grades_file
-        )
-        self._edit_msg_file = config_parser.get(
-            PLUGIN_NAME, "edit_msg_file", fallback=self._edit_msg_file
-        )
-        self._grade_specs = self._parse_grade_specs(config_parser)
-        self._teachers = self._parse_teachers(config_parser)
 
     @staticmethod
     def _parse_teachers(config_parser):
@@ -177,90 +171,3 @@ class CSVGradeCommand(plug.Plugin, plug.cli.Command):
         return [
             value for key, value in sec.items() if key.endswith("gradespec")
         ]
-
-def create_extension_command(self):
-    parser = plug.ExtensionParser()
-    parser.add_argument(
-        "--hf",
-        "--hook-results-file",
-        help="Path to an existing hook results file.",
-        type=str,
-        required=not self._hook_results_file,
-        default=self._hook_results_file,
-        dest="hook_results_file",
-    )
-    parser.add_argument(
-        "--gf",
-        "--grades-file",
-        help="Path to the CSV file with student grades.",
-        type=str,
-        required=not self._grades_file,
-        default=self._grades_file,
-        dest="grades_file",
-    )
-    parser.add_argument(
-        "--ef",
-        "--edit-msg-file",
-        help="Filepath specifying where to put the edit message. "
-        "Defaults to 'edit_msg.txt'",
-        type=str,
-        required=not self._edit_msg_file,
-        default=self._edit_msg_file,
-        dest="edit_msg_file",
-    )
-    parser.add_argument(
-        "--gs",
-        "--grade-specs",
-        help=(
-            "One or more grade specifications on the form "
-            "<PRIORITY>:<SYMBOL>:<REGEX>. Example: 1:P:[Pp]ass"
-        ),
-        type=str,
-        required=not self._grade_specs,
-        default=self._grade_specs,
-        nargs="+",
-        dest="grade_specs",
-    )
-    parser.add_argument(
-        "-t",
-        "--teachers",
-        help=(
-            "One or more space-separated usernames of teachers/TAs "
-            "that are authorized to open grading issues. If a "
-            "grading issue is found by a user not in this list, "
-            "a warning is logged and the grade is not recorded."
-        ),
-        type=str,
-        required=not self._teachers,
-        default=self._teachers,
-        nargs="+",
-    )
-    parser.add_argument(
-        "-a",
-        "--allow-other-states",
-        help="Allow other list-issues states than `all`. If this flag is "
-        "not specified, the `list-issues` command must have been run "
-        "with the `--all` flag.",
-        action="store_true",
-        default=False,
-    )
-    return plug.ExtensionCommand(
-        parser=parser,
-        name="record-grades",
-        help="Record grades from issues into a CSV file.",
-        description="Record grades from issues into a CSV file. Grade "
-        "specifications on the form <PRIORITY>:<SYMBOL>:<REGEX> "
-        "specify which issues are grading issues (by matching the title "
-        "against the spec regex), and the corresponding symbol is written "
-        "into the grades CSV file. If multiple grading issues are found "
-        "in the same repo, the one with the lowest priority is recorded. "
-        "A grade in the CSV file can only be overwritten by a grade with "
-        "lower priority. Only grading issues opened by teachers "
-        "specified by the ``--teachers`` option are recorded. Read more "
-        "at https://github.com/slarse/repobee-csvgrades",
-        callback=callback,
-        requires_base_parsers=[
-            plug.BaseParser.REPO_NAMES,
-            plug.BaseParser.STUDENTS,
-        ],
-    )

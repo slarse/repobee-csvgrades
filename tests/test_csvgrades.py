@@ -16,7 +16,7 @@ from repobee_csvgrades import _exception
 
 TEAMS = tuple(
     [
-        plug.Team(members=members)
+        plug.StudentTeam(members=members)
         for members in (["slarse"], ["glassey", "glennol"])
     ]
 )
@@ -145,15 +145,15 @@ class TestCallback:
         args = argparse.Namespace(
             students=list(TEAMS),
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            grades_file=tmp_grades_file,
+            assignments="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
             allow_other_states=False,
         )
 
-        csvgrades.callback(args=args, api=None)
+        csvgrades.callback(args=args)
 
         assert _file.read_grades_file(
             tmp_grades_file
@@ -166,15 +166,15 @@ class TestCallback:
         args = argparse.Namespace(
             students=list(TEAMS),
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            grades_file=tmp_grades_file,
+            assignments="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(edit_msg_file),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
             allow_other_states=False,
         )
 
-        csvgrades.callback(args=args, api=None)
+        csvgrades.callback(args=args)
 
         assert (
             edit_msg_file.read_text("utf8").strip()
@@ -189,15 +189,15 @@ class TestCallback:
         args = argparse.Namespace(
             students=list(TEAMS),
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            grades_file=tmp_grades_file,
+            assignments="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(edit_msg_file),
             teachers=["glassey", "slarse"],  # wrong teachers!
             grade_specs=[PASS_GRADESPEC_FORMAT],
             allow_other_states=False,
         )
 
-        csvgrades.callback(args=args, api=None)
+        csvgrades.callback(args=args)
 
         assert tmp_grades_file.read_text("utf8") == grades_file_contents
         assert not edit_msg_file.exists()
@@ -211,15 +211,15 @@ class TestCallback:
         args = argparse.Namespace(
             students=list(TEAMS),
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            grades_file=tmp_grades_file,
+            assignments="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(edit_msg_file),
             teachers=TEACHERS,
             grade_specs=[PASS_GRADESPEC_FORMAT, KOMP_GRADESPEC_FORMAT],
             allow_other_states=False,
         )
 
-        csvgrades.callback(args=args, api=None)
+        csvgrades.callback(args=args)
 
         assert _file.read_grades_file(
             tmp_grades_file
@@ -233,7 +233,7 @@ class TestCallback:
         """Test that e.g. a grade with priority 3 does not overwrite a grade
         with priority 1 that is already in the grades file.
         """
-        shutil.copy(str(EXPECTED_GRADES_MULTI_SPEC_FILE), str(tmp_grades_file))
+        shutil.copy(str(EXPECTED_GRADES_MULTI_SPEC_FILE), tmp_grades_file)
         slarse, *_ = TEAMS
         hook_result_mapping = {
             _marker.generate_repo_name(str(slarse), "week-4"): [
@@ -253,8 +253,8 @@ class TestCallback:
         args = argparse.Namespace(
             students=[slarse],
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names=["week-4"],
+            grades_file=tmp_grades_file,
+            assignments=["week-4"],
             edit_msg_file=str(edit_msg_file),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT, KOMP_GRADESPEC_FORMAT],
@@ -266,7 +266,7 @@ class TestCallback:
             autospec=True,
             return_value=hook_result_mapping,
         ):
-            csvgrades.callback(args=args, api=None)
+            csvgrades.callback(args=args)
 
         assert tmp_grades_file.read_text("utf8") == grades_file_contents
         assert not edit_msg_file.exists()
@@ -278,15 +278,15 @@ class TestCallback:
         args = argparse.Namespace(
             students=list(TEAMS),
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names="week-1 week-2 week-3 week-4 week-6".split(),
+            grades_file=tmp_grades_file,
+            assignments="week-1 week-2 week-3 week-4 week-6".split(),
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
             allow_other_states=False,
         )
 
-        csvgrades.callback(args=args, api=None)
+        csvgrades.callback(args=args)
 
         assert _file.read_grades_file(
             tmp_grades_file
@@ -298,12 +298,12 @@ class TestCallback:
         """Test that if a specified student is missing from the grades
         file, there is a crash.
         """
-        missing_team = plug.Team(members=["randomdude"])
+        missing_team = plug.StudentTeam(members=["randomdude"])
         args = argparse.Namespace(
             students=list(TEAMS) + [missing_team],
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            grades_file=tmp_grades_file,
+            assignments="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
@@ -311,7 +311,7 @@ class TestCallback:
         )
 
         with pytest.raises(_exception.FileError) as exc_info:
-            csvgrades.callback(args=args, api=None)
+            csvgrades.callback(args=args)
 
         assert "student(s) {} missing from the grades file".format(
             missing_team.members[0]
@@ -328,8 +328,8 @@ class TestCallback:
         args = argparse.Namespace(
             students=list(TEAMS),
             hook_results_file="",  # don't care, read_results_file is mocked
-            grades_file=str(tmp_grades_file),
-            master_repo_names="week-1 week-2 week-4 week-6".split(),
+            grades_file=tmp_grades_file,
+            assignments="week-1 week-2 week-4 week-6".split(),
             edit_msg_file=str(tmp_grades_file.parent / "editmsg.txt"),
             teachers=list(TEACHERS),
             grade_specs=[PASS_GRADESPEC_FORMAT],
@@ -347,7 +347,7 @@ class TestCallback:
         ]
 
         with pytest.raises(_exception.FileError) as exc_info:
-            csvgrades.callback(args=args, api=None)
+            csvgrades.callback(args=args)
 
         assert "repobee list-issues was not run with the --all flag" in str(
             exc_info.value
