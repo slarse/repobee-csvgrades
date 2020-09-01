@@ -113,10 +113,10 @@ def mark_grades(
 
 
 def extract_list_issues_results(
-    repo_name, hook_results: List[plug.HookResult]
-) -> plug.HookResult:
+    repo_name, hook_results: List[plug.Result]
+) -> plug.Result:
     for result in hook_results:
-        if result.hook == "list-issues":
+        if result.name == "list-issues":
             return result
     raise plug.PlugError(
         "hook results for {} does not contain 'list-issues' result".format(

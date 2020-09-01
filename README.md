@@ -8,7 +8,7 @@
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 A plugin for reporting grades into a CSV file based on issue titles.
-`repobee-csvgrades` adds the `record-grades` command, which operates on the
+`repobee-csvgrades` adds the `record` category to repobee, along with the `grades` command, which operates on the
 JSON file produced by running `repobee list-issues` with the
 `--hook-results-file` option. The idea is pretty simple: find issues in student
 repositories that match certain user-defined conditions (title + who opened it)
@@ -60,14 +60,14 @@ That's just a quick introduction, see [Usage](#usage) for a more detailed
 description.
 
 ## Install
-Currently, the best way to install is directly from the Git repo.
+As of `Repobee 3.0`, installing a plugin is easier than ever. 
 
-```
-$ python3 -m pip install git+https://github.com/slarse/repobee-csvgrades.git
-```
+First, make sure that you have the latest version of `Repobee` installed,
+instructions can be found on the [Repobee website](https://repobee.org/).
 
-Eventually, `repobee-csvgrades` will be moved to PyPi so you can just `pip
-install` it like any other package.
+To install `repobee-csvgrades`, simply run the command `repobee plugin install`, and this will open up a bullet-list where you can select csvgrades. 
+
+> If `repobee-csvgrades` does not show up when running the `grades record` command. Run `repobee plugin list`, this will present a list with all the availiable plugins. If you cannot find `repobee-csvgrades` in the list, try updating `repobee` using repobee `repobee manage upgrade`.
 
 ## Usage
 `repobee-csvgrades` is easy to use and highly customizable. First of all, you
@@ -80,7 +80,7 @@ don't miss the fact that you can configure all options in the
 
 ### The grade specification (`--grade-specs` option)
 The grade specification (or _grade spec_) is the most important part of this
-plugin. Grade specs tell the `record-grades` command which issues to consider as
+plugin. Grade specs tell the `grades record` command which issues to consider as
 grading issues, and which grading issues outweigh others if several are found. A
 typical grade spec looks like this: `1:P:[Pp]ass`. There are three parts to the
 grade spec, delimited by `:`. First is the priority. A lower priority outweighs
@@ -98,14 +98,14 @@ Grade specs are specified by the `--grade-specs` option. Example:
 ```
 
 ### The hook results file (`--hook-results-file` option)
-`record-grades` operates on a file with a JSON database produced by the
-`list-issues` command (one of RepoBee's core commands). The file is produced by
-supplying the `--hook-results-file FILEPATH` option to `list-issues`. You
-should additionally supply `list-issues` with the `--all` flag, to get both open
+`grades record` operates on a file with a JSON database produced by the
+`issues list` command (one of RepoBee's core commands). The file is produced by
+supplying the `--hook-results-file FILEPATH` option to `issues list`. You
+should additionally supply `issues list` with the `--all` flag, to get both open
 and closed issues (so as to avoid missing grading issues). If you try to use
-`record-grades` with a hook results file that's been produced without the
+`grades record` with a hook results file that's been produced without the
 `--all` flag, it will exit with an error. If you really want to run with that
-file, you can supply the `--allow-other-states` flag to `record-grades`, which
+file, you can supply the `--allow-other-states` flag to `grades record`, which
 disregards how the hook results were collected.
 
 The hook results file is specified by the `--hook-results-file` option. Example:
@@ -115,7 +115,7 @@ The hook results file is specified by the `--hook-results-file` option. Example:
 ```
 
 ### The grades file (`--grades-file` option)
-`record-grades` writes grades to a CSV file that we refer to as the _grades
+`grades record` writes grades to a CSV file that we refer to as the _grades
 file_. Each row represents one student, except for the first row which is a
 header row. The following requirements are placed on the CSV file format:
 
@@ -127,7 +127,7 @@ header row. The following requirements are placed on the CSV file format:
   must exactly match the master repo's name
 
 Below is an example grades file that has been partially filled in by the
-`record-grades` command. As it is a CSV file, it is rendered very nicely on
+`grades record` command. As it is a CSV file, it is rendered very nicely on
 GitHub (see for example [this test file](/tests/expected_grades.csv)), and it
 is strongly recommended that you keep this file in version control.
 
@@ -141,15 +141,15 @@ is strongly recommended that you keep this file in version control.
 There are a few additional things to keep in mind with the grades file.
 
 * You should not manually edit the file with grade symbols for which there are
-  no grade specifications, as this may cause `record-grades` to exit because it
+  no grade specifications, as this may cause `grades record` to exit because it
   can't find a priority for the grade.
 * You can't have a task called `username`.
 * You can't have duplicate column headers.
-* You **can** have any additional columns that you want. `record-grades` will
+* You **can** have any additional columns that you want. `grades record` will
   only look at the `username` column, and the columns corresponding to the
   master repo names that you specify when calling the command. Additional
   columns will simply not be inspected.
-* `record-grades` formats the diff file such that every cell of the same column
+* `grades record` formats the diff file such that every cell of the same column
   has the same width, which makes diffs easy to inspect.
   - Because of this formatting, it is recommended to keep grade spec symbols
     shorter than the master repo names, to avoid resizing of columns when grades
@@ -162,7 +162,7 @@ The grades file is specified by the `--grades-file` option. Example:
 ```
 
 ### The edit message file (`--edit-msg-file` option)
-Each time you run `record-grades`, a file is produced specifying what new grades
+Each time you run `grades record`, a file is produced specifying what new grades
 were recorded, and tags the teachers who opened the grading issues. The
 intention is that this edit message should be used as a Git commit message. For
 example, if `slarse` has teacher `ta_a`, and `glassey` has teacher `ta_b`, and
@@ -192,7 +192,7 @@ option. Example:
 ```
 
 ### Authorized teachers (`--teachers` option)
-The `record-grades` command requires you to specify a set of teachers that are
+The `grades record` command requires you to specify a set of teachers that are
 authorized to open grading issues. This is to avoid having students trick the
 system. If an grading issue by an unauthorized user is found, a warning is
 emitted. This is both to alert the user about potential attempts at foul play,
