@@ -8,7 +8,6 @@
 """
 import argparse
 import pathlib
-import configparser
 import itertools
 
 import daiquiri
@@ -21,6 +20,7 @@ from repobee_csvgrades import (
     _containers,
     _exception,
 )
+
 PLUGIN_NAME = "csvgrades"
 
 LOGGER = daiquiri.getLogger(__file__)
@@ -30,8 +30,9 @@ grades_category = plug.cli.category(
     action_names=["record"],
     help="collect grading of students",
     description="Used to gather all student grades and save them insade a "
-    "CSV file."
+    "CSV file.",
 )
+
 
 def callback(args: argparse.Namespace) -> None:
     results_file = args.hook_results_file
@@ -82,7 +83,6 @@ def callback(args: argparse.Namespace) -> None:
 
 
 class CSVGradeCommand(plug.Plugin, plug.cli.Command):
-
     def command(self):
         callback(self.args)
 
@@ -102,7 +102,7 @@ class CSVGradeCommand(plug.Plugin, plug.cli.Command):
         base_parsers=[
             plug.BaseParser.ASSIGNMENTS,
             plug.BaseParser.STUDENTS,
-        ]
+        ],
     )
 
     allow_other_states = plug.cli.flag(
@@ -126,7 +126,7 @@ class CSVGradeCommand(plug.Plugin, plug.cli.Command):
     grade_specs = plug.cli.option(
         short_name="--gs",
         help="One or more grade specifications on the form "
-            "<PRIORITY>:<SYMBOL>:<REGEX>. Example: 1:P:[Pp]ass",
+        "<PRIORITY>:<SYMBOL>:<REGEX>. Example: 1:P:[Pp]ass",
         argparse_kwargs={"nargs": "+"},
         configurable=True,
         required=True,
@@ -152,7 +152,6 @@ class CSVGradeCommand(plug.Plugin, plug.cli.Command):
         configurable=True,
         required=True,
     )
-
 
     @staticmethod
     def _parse_teachers(config_parser):
