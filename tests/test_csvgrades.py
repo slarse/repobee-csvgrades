@@ -44,8 +44,8 @@ def create_pass_hookresult(author):
         created_at=datetime(1992, 9, 19),
         author=author,
     )
-    return plug.HookResult(
-        hook="list-issues",
+    return plug.Result(
+        name="list-issues",
         status=plug.Status.SUCCESS,
         msg=None,
         data={pass_issue.number: pass_issue.to_dict()},
@@ -60,8 +60,8 @@ def create_komp_hookresult(author):
         created_at=datetime(2009, 12, 31),
         author=author,
     )
-    return plug.HookResult(
-        hook="list-issues",
+    return plug.Result(
+        name="list-issues",
         status=plug.Status.SUCCESS,
         msg=None,
         data={komp_issue.number: komp_issue.to_dict()},
@@ -71,8 +71,8 @@ def create_komp_hookresult(author):
 def create_komp_and_pass_hookresult(author):
     other = create_komp_hookresult(author)
     pass_ = create_pass_hookresult(author)
-    return plug.HookResult(
-        hook="list-issues",
+    return plug.Result(
+        name="list-issues",
         status=plug.Status.SUCCESS,
         msg=None,
         data={**other.data, **pass_.data},
@@ -116,8 +116,8 @@ def mocked_hook_results(mocker):
         ]
     }
     hook_results["list-issues"] = [
-        plug.HookResult(
-            hook="list-issues",
+        plug.Result(
+            name="list-issues",
             status=plug.Status.SUCCESS,
             msg=None,
             data={"state": plug.IssueState.ALL.value},
@@ -240,8 +240,8 @@ class TestCallback:
                 create_komp_hookresult(SLARSE_TA)
             ],
             "list-issues": [
-                plug.HookResult(
-                    hook="list-issues",
+                plug.Result(
+                    name="list-issues",
                     status=plug.Status.SUCCESS,
                     msg=None,
                     data={"state": plug.IssueState.ALL.value},
@@ -336,8 +336,8 @@ class TestCallback:
             allow_other_states=False,
         )
         mocked_hook_results["list-issues"] = [
-            plug.HookResult(
-                hook="list-issues",
+            plug.Result(
+                name="list-issues",
                 status=plug.Status.SUCCESS,
                 msg=None,
                 # change the state to OPEN, which will cause any closed
