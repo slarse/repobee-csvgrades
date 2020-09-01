@@ -320,8 +320,8 @@ class TestCallback:
     def test_raises_if_state_is_not_all(
         self, tmp_grades_file, mocked_hook_results
     ):
-        """Test that a warning is issued if the plugin is run on list-issues
-        results where the state is not ``all`` (i.e. ``repobee list-issues``
+        """Test that a warning is issued if the plugin is run on ``issues list``
+        results where the state is not ``all`` (i.e. ``repobee issues list``
         was not run with the ``--all`` flag). This is important as closed
         issues should still be taken into account.
         """
@@ -349,7 +349,7 @@ class TestCallback:
         with pytest.raises(_exception.FileError) as exc_info:
             csvgrades.callback(args=args)
 
-        assert "repobee `issues list` was not run with the --all flag" in str(
+        assert "`repobee issues list` was not run with the --all flag" in str(
             exc_info.value
         )
 

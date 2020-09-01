@@ -50,7 +50,7 @@ def callback(args: argparse.Namespace) -> None:
         != plug.IssueState.ALL
     ):
         raise _exception.FileError(
-            "repobee `issues list` was not run with the --all flag. This may "
+            "`repobee issues list` was not run with the --all flag. This may "
             "cause grading issues to be missed. Re-run `issues list` with the "
             "--all flag, or run this command with --allow-other-states to "
             "record grades anyway."
