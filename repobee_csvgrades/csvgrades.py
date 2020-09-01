@@ -49,8 +49,8 @@ def callback(args: argparse.Namespace) -> None:
         != plug.IssueState.ALL
     ):
         raise _exception.FileError(
-            "repobee list-issues was not run with the --all flag. This may "
-            "cause grading issues to be missed. Re-run list-issues with the "
+            "repobee `issues list` was not run with the --all flag. This may "
+            "cause grading issues to be missed. Re-run `issues list` with the "
             "--all flag, or run this command with --allow-other-states to "
             "record grades anyway."
         )
@@ -106,7 +106,7 @@ class CSVGradeCommand(plug.Plugin, plug.cli.Command):
     )
 
     allow_other_states = plug.cli.flag(
-        help="Allow other list-issues states than 'all'. If this flag is "
+        help="Allow other `issues list` states than 'all'. If this flag is "
         "not specified, the 'issues list' command must have been run "
         "with the '--all' flag.",
         default=False,
