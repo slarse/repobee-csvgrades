@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
+> **Important:** repobee-csvgrades v0.2.0 and later require RepoBee 3.
+
 A plugin for reporting grades into a CSV file based on issue titles.
 `repobee-csvgrades` adds the `record` category to repobee, along with the `grades` command, which operates on the
 JSON file produced by running `repobee list-issues` with the
