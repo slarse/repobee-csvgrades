@@ -349,7 +349,7 @@ class TestCallback:
         with pytest.raises(_exception.FileError) as exc_info:
             csvgrades.callback(args=args)
 
-        assert "repobee list-issues was not run with the --all flag" in str(
+        assert "repobee `issues list` was not run with the --all flag" in str(
             exc_info.value
         )
 
