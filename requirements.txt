@@ -1,1 +1,1 @@
-repobee>=3.0.0-beta.3
+repobee>=3.0.0
