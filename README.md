@@ -209,28 +209,26 @@ Teachers are specified with the `--teachers` option. Example:
 
 ## Configuration file section
 `repobee-csvgrades` can fetch information from the
-[RepoBee configuration file](https://repobee.readthedocs.io/en/stable/configuration.html#configuration-file),
+[RepoBee configuration file](https://repobee.readthedocs.io/en/stable/getting_started.html#editing-the-configuration-file-the-wizard-and-show-actions),
 under the `csvgrades` section. All of the command line options can be
-configured. Here is an example of a complete configuration file that sets
-the same defaults as shown in the examples that end each subsection in the
-[Usage](#usage) section.
+configured. Use the `config wizard` command to configure `csvgrades`.
+
+> **Important:** The plugin must be active when running `config wizard`, or
+> otherwise it will not be configurable. Here, we activate it with `-p
+> csvgrades`.
 
 ```
-[DEFAULTS]
-plugins = csvgrades
-
-[csvgrades]
-hook_results_file = ~/some_course/2019/hook_results_jan.json
-grades_file = ~/some_course/2019/grades.csv
-edit_msg_file = edit_msg.txt
-teachers = ta_a,ta_b
-pass_gradespec = 1:P:[Pp]ass
-fail_gradespec = 2:F:[Ff]ail
-corr_gradespec = 3:C:[Cc]orrection
+$ repobee -p csvgrades config wizard
+Editing config file at /home/slarse/.config/repobee/config.ini
+Select a section to configure:
+ repobee
+●csvgrades # make sure to select the csvgrades section to configure
 ```
 
-Note that you can have an arbitrary amount of grade spec options. Just end an
-option with `gradespec` and it will be parsed as a grade spec.
+Note that some of the configurable options are lists, such as the `teachers`
+and `grade-specs` options. Simply separate each item in the list with a space,
+like you would on the commmand line. If an item contains a space (such as a
+regex in a grade spec), the whole item must be surrounded with single quotes.
 
 # License
 `repobee-csvgrades` is released under the MIT license. See [LICENSE](LICENSE)
