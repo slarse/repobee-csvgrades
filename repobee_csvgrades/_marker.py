@@ -10,6 +10,7 @@ import itertools
 import re
 import heapq
 import contextlib
+import dataclasses
 from typing import List
 
 import daiquiri
@@ -17,9 +18,18 @@ import daiquiri
 import repobee_plug as plug
 
 from repobee_csvgrades import _exception
+from repobee_csvgrades import _containers
 
 LOGGER = daiquiri.getLogger(__file__)
 
+@dataclasses.dataclass(frozen=True, order=True)
+class _SpeccedIssue:
+    """Wrapper for an issue and associated grade spec, which is ordered by the
+    gradespec.
+    """
+
+    spec: _containers.GradeSpec = dataclasses.field(compare=True)
+    issue: plug.platform.Issue = dataclasses.field(compare=False)
 
 def get_authorized_issues(issues, teachers, grade_spec, repo_name):
     matched_issues = [
@@ -61,13 +71,13 @@ def mark_grade(
     issue_heap = []
     for spec in grade_specs:
         for issue in get_authorized_issues(issues, teachers, spec, repo_name):
-            heapq.heappush(issue_heap, (spec, issue))
+            heapq.heappush(issue_heap, _SpeccedIssue(spec, issue))
 
     graded_students = []
     author = None
     symbol = None
     if issue_heap:
-        spec, issue = issue_heap[0]
+        spec, issue = issue_heap[0].spec, issue_heap[0].issue
         for student in team.members:
             with log_error(_exception.GradingError):
                 old = grades.set(student, master_repo_name, spec)
