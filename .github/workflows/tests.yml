@@ -1,5 +1,16 @@
 name: tests
 
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  create:
+    tags:
+      - "/^v\\d+\\.\\d+\\.\\d+(-(alpha|beta|rc)(\\.\\d+)?)?$/"
+  schedule:
+  - cron: "0 0 * * *"
+
 jobs:
 
   unit-tests:
