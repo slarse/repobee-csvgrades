@@ -1,6 +1,6 @@
 # repobee-csvgrades
 
-[![Build Status](https://travis-ci.com/repobee/repobee-csvgrades.svg)](https://travis-ci.com/repobee/repobee-csvgrades)
+![Build Status](https://github.com/repobee/repobee-csvgrades/workflows/tests/badge.svg)
 [![Code Coverage](https://codecov.io/gh/repobee/repobee-csvgrades/branch/master/graph/badge.svg)](https://codecov.io/gh/repobee/repobee-csvgrades)
 ![Supported Python Versions](https://img.shields.io/badge/python-3.6%2C%203.7%2C%203.8-blue)
 ![Supported Platforms](https://img.shields.io/badge/platforms-Linux%2C%20macOS-blue.svg)
