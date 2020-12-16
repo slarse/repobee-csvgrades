@@ -36,11 +36,11 @@ FAIL_GRADESPEC_FORMAT = "2:F:[Ff]ail"
 KOMP_GRADESPEC_FORMAT = "3:K:[Kk]omplettering"
 
 
-def create_pass_hookresult(author):
+def create_pass_hookresult(author, number=3):
     pass_issue = plug.Issue(
         title="Pass",
         body="This is a pass",
-        number=3,
+        number=number,
         created_at=datetime(1992, 9, 19),
         author=author,
     )
@@ -79,6 +79,17 @@ def create_komp_and_pass_hookresult(author):
     )
 
 
+def create_duplicated_pass_hookresult(author):
+    first_pass = create_pass_hookresult(author, number=3)
+    second_pass = create_pass_hookresult(author, number=4)
+    return plug.Result(
+        name="list-issues",
+        status=plug.Status.SUCCESS,
+        msg=None,
+        data={**first_pass.data, **second_pass.data},
+    )
+
+
 @pytest.fixture
 def mocked_hook_results(mocker):
     """Hook results with passes for glassey-glennol in week-1 and week-2, and
@@ -91,7 +102,7 @@ def mocked_hook_results(mocker):
         for team, repo_name, result in [
             (slarse, "week-1", create_komp_hookresult(SLARSE_TA)),
             (slarse, "week-2", create_komp_hookresult(SLARSE_TA)),
-            (slarse, "week-4", create_pass_hookresult(SLARSE_TA)),
+            (slarse, "week-4", create_duplicated_pass_hookresult(SLARSE_TA)),
             (slarse, "week-6", create_komp_and_pass_hookresult(SLARSE_TA)),
             (
                 glassey_glennol,
