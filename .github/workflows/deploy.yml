@@ -1,4 +1,4 @@
-# Workflow for deploying RepoBee to PyPi
+# Workflow for deploying to PyPi
 
 name: deploy
 
