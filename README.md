@@ -80,6 +80,60 @@ however. The following sections explain the command line options in depth. Also
 don't miss the fact that you can configure all options in the
 [configuration file](#configuration-file-section).
 
+### Quickstart
+To give you a very brief idea of how to use this plugin, let's have a look at
+the commands required to report grades. Some of what you see here won't make
+sense until you read the rest of the usage instructions, but it will give you
+an overview of the general usage and a good quick-reference once you've used
+the plugin once or twice.
+
+Before we get started, let's activate the plugin. As it only adds commands,
+it's suitable for persistent activation.
+
+```bash
+$ repobee plugin activate
+# follow the instructions on-screen to activate the plugin
+$ repobee -h
+```
+
+Now, assume that we want to report grades for our three students `slarse`,
+`glassey` and `glennol` on their three tasks `task-1`, `task-2` and `task-3`, as
+shown in the grades file from the [example use case](#example-use-case).
+We need to run two commands: one to fetch issues from the platform (e.g. GitHub
+or GitLab), and one to report grading issues from the fetched issues into the
+grades CSV file. So let's first fetch the issues.
+
+```bash
+$ repobee issues list --assignments task-1 task-2 task-3 \
+        --students slarse glassey glennol \
+        --all \
+        --hook-results-file results.json
+```
+
+> **Note:** This assumes the platform settings are configured, if they are not
+> RepoBee will ask you for more options.
+
+The issues are stored in the hook results file, which `csvgrades` then uses to
+report issues. The reason reporting is split in two steps like so is to avoid
+partially reporting grades in the case of a network failure.
+
+Now, it's time to actually report the grades, and we can do that with the
+`grades record` command. It would look something like so.
+
+```bash
+$ repobee grades record --assignments task-1 task-2 task-3 \
+        --students slarse glassey glennol \
+        --hook-results-file results.json \
+        --grade-specs '1:P:[Pp]ass' '2:F:[Ff]ail '3:c:[Cc]orrection' \
+        --edit-msg-file edit_msg.txt \
+        --teachers ta_a ta_b
+```
+
+And that should pretty much do the trick! In the following sections, the
+different options used here are described in more detail. We also highly
+recommend configuring some of the options, which you can find out more about in
+the [Configuration section](#configuration).
+
 ### The grade specification (`--grade-specs` option)
 The grade specification (or _grade spec_) is the most important part of this
 plugin. Grade specs tell the `grades record` command which issues to consider as
@@ -207,7 +261,7 @@ Teachers are specified with the `--teachers` option. Example:
 --teachers ta_a ta_b
 ```
 
-## Configuration file section
+## Configuration
 `repobee-csvgrades` can fetch information from the
 [RepoBee configuration file](https://repobee.readthedocs.io/en/stable/getting_started.html#editing-the-configuration-file-the-wizard-and-show-actions),
 under the `csvgrades` section. All of the command line options can be
