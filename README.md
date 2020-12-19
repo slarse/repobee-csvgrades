@@ -59,7 +59,7 @@ used as a commit message for the grades file, so that the people who reported
 grades get notified of which grades have been written to the grades sheet.
 
 That's just a quick introduction to what the plugin can do, see [Usage](#usage)
-how to actually use it in practice.
+for how to actually use it in practice.
 
 ## Install
 As of `Repobee 3.0`, installing a plugin is easier than ever. 
