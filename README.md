@@ -58,8 +58,8 @@ and `ta_b`) that opened the issues. The intention is that this message should be
 used as a commit message for the grades file, so that the people who reported
 grades get notified of which grades have been written to the grades sheet.
 
-That's just a quick introduction, see [Usage](#usage) for a more detailed
-description.
+That's just a quick introduction to what the plugin can do, see [Usage](#usage)
+how to actually use it in practice.
 
 ## Install
 As of `Repobee 3.0`, installing a plugin is easier than ever. 
@@ -75,10 +75,11 @@ To install `repobee-csvgrades`, simply run the command `repobee plugin install`,
 `repobee-csvgrades` is easy to use and highly customizable. First of all, you
 need to know how to use a plugin for RepoBee, see the
 [RepoBee plugin docs](https://repobee.readthedocs.io/en/stable/plugins.html).
-Then, there are a few key parts to familiarize yourself with before using it,
-however. The following sections explain the command line options in depth. Also
-don't miss the fact that you can configure all options in the
-[configuration file](#configuration-file-section).
+Then, there are a few key parts to familiarize yourself with before using it.
+The [Quickstart](#quickstart) section provides a brief introduction on how to
+use the plugin, without going into too much detail. The following sections
+explain the command line options in depth. Also don't miss the fact that you
+can configure all options in the [configuration file](#configuration).
 
 ### Quickstart
 To give you a very brief idea of how to use this plugin, let's have a look at
@@ -113,9 +114,9 @@ $ repobee issues list --assignments task-1 task-2 task-3 \
 > **Note:** This assumes the platform settings are configured, if they are not
 > RepoBee will ask you for more options.
 
-The issues are stored in the hook results file, which `csvgrades` then uses to
-report issues. The reason reporting is split in two steps like so is to avoid
-partially reporting grades in the case of a network failure.
+The issues are stored in the hook results file, which `repobee-csvgrades` then
+uses to report issues. The reason reporting is split in two steps like so is to
+avoid partially reporting grades in the case of a network failure.
 
 Now, it's time to actually report the grades, and we can do that with the
 `grades record` command. It would look something like so.
